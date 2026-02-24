@@ -1,0 +1,22 @@
+{
+  "name": "commune",
+  "version": "1.0.0",
+  "private": true,
+  "description": "COMMUNE — Community Operating System",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0"
+  }
+}
