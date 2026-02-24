@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Row, Col, Card, Space, Tag, Button, Avatar, Spin, Empty } from 'antd';
+import { Typography, Row, Col, Card, Space, Tag, Button, Avatar, Empty } from 'antd';
 import {
   TeamOutlined, RocketOutlined, CalendarOutlined, PlusOutlined,
   ArrowRightOutlined, FireOutlined, TrophyOutlined,
@@ -50,7 +50,7 @@ const StatCard: React.FC<{
           </div>
         </div>
         <Title level={3} style={{ margin: 0, color: 'var(--c-text-bright)' }}>{value}</Title>
-        {trend && <Text style={{ color: '#00b894', fontSize: 12 }}>{trend}</Text>}
+        {trend && <Text style={{ color: 'var(--c-success)', fontSize: 12 }}>{trend}</Text>}
       </Space>
     </Card>
   </motion.div>
@@ -108,7 +108,7 @@ const DashboardPage: React.FC = () => {
               title="Notifications"
               value={notifications.length}
               icon={<RocketOutlined />}
-              color="#00b894"
+              color="var(--c-success)"
             />
           </Col>
           <Col xs={24} sm={12} lg={6}>
@@ -116,7 +116,7 @@ const DashboardPage: React.FC = () => {
               title="Upcoming Events"
               value={0}
               icon={<CalendarOutlined />}
-              color="#fdcb6e"
+              color="var(--c-warning)"
             />
           </Col>
           <Col xs={24} sm={12} lg={6}>
@@ -124,7 +124,7 @@ const DashboardPage: React.FC = () => {
               title="Builder Score"
               value={0}
               icon={<TrophyOutlined />}
-              color="#e17055"
+              color="var(--c-error)"
             />
           </Col>
         </Row>
@@ -219,7 +219,7 @@ const DashboardPage: React.FC = () => {
             <Card
               title={
                 <Space>
-                  <FireOutlined style={{ color: '#e17055' }} />
+                  <FireOutlined style={{ color: 'var(--c-error)' }} />
                   <span style={{ color: 'var(--c-text-bright)' }}>Recent Activity</span>
                 </Space>
               }
@@ -242,10 +242,10 @@ const DashboardPage: React.FC = () => {
                         height: 8,
                         borderRadius: '50%',
                         background:
-                          notif.type === 'task' ? '#00b894'
+                          notif.type === 'task' ? 'var(--c-success)'
                             : notif.type === 'community' ? 'var(--c-accent)'
-                            : notif.type === 'event' ? '#fdcb6e'
-                            : '#74b9ff',
+                            : notif.type === 'event' ? 'var(--c-warning)'
+                            : 'var(--c-info)',
                         marginTop: 6,
                         flexShrink: 0,
                       }}

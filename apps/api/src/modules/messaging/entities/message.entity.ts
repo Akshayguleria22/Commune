@@ -9,8 +9,8 @@ export class Channel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid', name: 'community_id' })
-  communityId: string;
+  @Column({ type: 'uuid', nullable: true, name: 'community_id' })
+  communityId: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   name: string;

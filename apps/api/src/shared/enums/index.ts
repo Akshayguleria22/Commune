@@ -50,6 +50,14 @@ export enum ChannelType {
   TEXT = 'text',
   ANNOUNCEMENT = 'announcement',
   TASK_LINKED = 'task_linked',
+  DM = 'dm',
+}
+
+export enum FriendshipStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DECLINED = 'declined',
+  BLOCKED = 'blocked',
 }
 
 export enum AuthProvider {

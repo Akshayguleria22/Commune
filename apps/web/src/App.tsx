@@ -19,6 +19,9 @@ const DiscoverPage = React.lazy(() => import('./modules/discovery/pages/Discover
 const EventsPage = React.lazy(() => import('./modules/event/pages/EventsPage'));
 const PortfolioPage = React.lazy(() => import('./modules/portfolio/pages/PortfolioPage'));
 const SettingsPage = React.lazy(() => import('./modules/settings/pages/SettingsPage'));
+const MessagingPage = React.lazy(
+  () => import("./modules/messaging/pages/MessagingPage"),
+);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -71,25 +74,57 @@ const AppInner: React.FC = () => {
               <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
               {/* Protected routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                <Route index element={<Navigate to="/dashboard/communities" replace />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route
+                  index
+                  element={<Navigate to="/dashboard/communities" replace />}
+                />
                 <Route path="communities" element={<CommunitiesPage />} />
-                <Route path="communities/:slug" element={<CommunityDetailPage />} />
-                <Route path="communities/:slug/tasks" element={<KanbanPage />} />
+                <Route
+                  path="communities/:slug"
+                  element={<CommunityDetailPage />}
+                />
+                <Route
+                  path="communities/:slug/tasks"
+                  element={<KanbanPage />}
+                />
                 <Route path="discover" element={<DiscoverPage />} />
                 <Route path="tasks" element={<KanbanPage />} />
                 <Route path="events" element={<EventsPage />} />
                 <Route path="portfolio/:username" element={<PortfolioPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="messages" element={<MessagingPage />} />
                 <Route path="notifications" element={<DashboardPage />} />
               </Route>
 
               {/* Legacy redirect */}
-              <Route path="/communities" element={<Navigate to="/dashboard/communities" replace />} />
-              <Route path="/communities/:slug" element={<CommunityRedirect />} />
-              <Route path="/tasks" element={<Navigate to="/dashboard/tasks" replace />} />
-              <Route path="/events" element={<Navigate to="/dashboard/events" replace />} />
-              <Route path="/discover" element={<Navigate to="/dashboard/discover" replace />} />
+              <Route
+                path="/communities"
+                element={<Navigate to="/dashboard/communities" replace />}
+              />
+              <Route
+                path="/communities/:slug"
+                element={<CommunityRedirect />}
+              />
+              <Route
+                path="/tasks"
+                element={<Navigate to="/dashboard/tasks" replace />}
+              />
+              <Route
+                path="/events"
+                element={<Navigate to="/dashboard/events" replace />}
+              />
+              <Route
+                path="/discover"
+                element={<Navigate to="/dashboard/discover" replace />}
+              />
             </Routes>
           </Suspense>
         </BrowserRouter>

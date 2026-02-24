@@ -6,3 +6,4 @@ export { tasksApi } from './tasks.api';
 export { searchApi } from './search.api';
 export { portfolioApi } from './portfolio.api';
 export { notificationsApi } from './notifications.api';
+export { messagingApi } from './messaging.api';

@@ -84,6 +84,10 @@ export function useLeaveCommunity() {
     mutationFn: (id: string) => communitiesApi.leave(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      message.success('Left community');
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.message || 'Failed to leave community');
     },
   });
 }
