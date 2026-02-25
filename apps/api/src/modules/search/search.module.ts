@@ -5,9 +5,10 @@ import { SearchService } from './search.service';
 import { Community } from '../community/entities';
 import { Event } from '../event/entities';
 import { Task } from '../collaboration/entities';
+import { User } from '../auth/entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Community, Event, Task])],
+  imports: [TypeOrmModule.forFeature([Community, Event, Task, User])],
   controllers: [SearchController],
   providers: [SearchService],
   exports: [SearchService],

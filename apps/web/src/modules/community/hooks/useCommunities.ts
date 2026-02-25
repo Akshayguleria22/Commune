@@ -58,6 +58,22 @@ export function useCreateCommunity() {
   });
 }
 
+/** Update an existing community */
+export function useUpdateCommunity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string, data: any }) => communitiesApi.update(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      message.success('Community updated');
+    },
+    onError: () => {
+      message.error('Failed to update community');
+    }
+  });
+}
+
 /** Join a community */
 export function useJoinCommunity() {
   const queryClient = useQueryClient();

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Community } from '../community/entities';
 import { Event } from '../event/entities';
 import { Task } from '../collaboration/entities';
+import { User } from '../auth/entities';
 
 export interface SearchResult {
   type: 'community' | 'user' | 'event' | 'task';
@@ -25,6 +26,8 @@ export class SearchService {
     private readonly eventRepo: Repository<Event>,
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async search(query: string, limit: number = 20): Promise<SearchResult[]> {
@@ -68,6 +71,25 @@ export class SearchService {
         subtitle: e.description?.slice(0, 120) || null,
         avatarUrl: null,
         score: e.rsvpCount,
+      });
+    }
+
+    // Search users
+    const users = await this.userRepo
+      .createQueryBuilder('u')
+      .where('LOWER(u.display_name) LIKE :term', { term: searchTerm })
+      .orWhere('LOWER(u.username) LIKE :term', { term: searchTerm })
+      .take(limit)
+      .getMany();
+
+    for (const u of users) {
+      results.push({
+        type: 'user',
+        id: u.id,
+        title: u.displayName || u.username,
+        subtitle: `@${u.username}`,
+        avatarUrl: u.avatarUrl,
+        score: 1, // Base score, could be dynamic
       });
     }
 

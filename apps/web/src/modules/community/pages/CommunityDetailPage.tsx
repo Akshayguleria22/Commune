@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, Tabs, Avatar, Button, Tag, Space, Row, Col, Card, Input, Spin, Empty } from 'antd';
+import {
+  Typography,
+  Tabs,
+  Avatar,
+  Button,
+  Tag,
+  Space,
+  Row,
+  Col,
+  Card,
+  Input,
+  Spin,
+  Empty,
+  message as antMsg,
+  Tooltip,
+  Modal,
+  Form,
+  Select,
+} from "antd";
 import {
   TeamOutlined,
   ProjectOutlined,
@@ -13,12 +31,18 @@ import {
   SendOutlined,
   LockOutlined,
   ClockCircleOutlined,
+  BellOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import { motion } from 'framer-motion';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ContributionHeatmap, StatCard } from '../../../shared/components';
-import { useCommunity, useCommunityMembers, useCommunityContributions, useJoinCommunity, useLeaveCommunity } from '../hooks/useCommunities';
+import { useCommunity, useCommunityMembers, useCommunityContributions, useJoinCommunity, useLeaveCommunity, useUpdateCommunity } from '../hooks/useCommunities';
 import { useEvents } from '../../event/hooks/useEvents';
 import { EventCard } from '../../../shared/components';
+import { messagingApi } from "../../../api/messaging.api";
+import KanbanPage from "../../collaboration/pages/KanbanPage";
+import { useAuthStore } from "../../../stores/auth.store";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -26,20 +50,80 @@ const CommunityDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user: me } = useAuthStore();
+  const queryClient = useQueryClient();
 
-  const { data: community, isLoading } = useCommunity(slug ?? '');
-  const { data: membersData } = useCommunityMembers(community?.id ?? '');
-  const { data: contribsData } = useCommunityContributions(community?.id ?? '');
-  const { data: eventsData } = useEvents(community?.id ?? '');
+  const { data: community, isLoading } = useCommunity(slug ?? "");
+  const { data: membersData } = useCommunityMembers(community?.id ?? "");
+  const { data: contribsData } = useCommunityContributions(community?.id ?? "");
+  const { data: eventsData } = useEvents(community?.id ?? "");
   const joinMut = useJoinCommunity();
   const leaveMut = useLeaveCommunity();
+  const updateMut = useUpdateCommunity();
 
-  const members: any[] = Array.isArray(membersData) ? membersData : (membersData as any)?.items ?? [];
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [form] = Form.useForm();
+
+  // Friend request support
+  const { data: friends = [] } = useQuery({
+    queryKey: ["friends"],
+    queryFn: messagingApi.getFriends,
+  });
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ["friends-pending"],
+    queryFn: messagingApi.getPendingRequests,
+  });
+  const sendFriendReqMut = useMutation({
+    mutationFn: (addresseeId: string) =>
+      messagingApi.sendFriendRequest(addresseeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends-pending"] });
+      antMsg.success("Friend request sent!");
+    },
+    onError: () => antMsg.error("Could not send friend request"),
+  });
+
+  // Build lookup sets for friend status
+  const friendUserIds = new Set<string>(
+    Array.isArray(friends)
+      ? friends.map((f: any) =>
+          f.requesterId === me?.id ? f.addresseeId : f.requesterId,
+        )
+      : [],
+  );
+  const pendingSentIds = new Set<string>(
+    Array.isArray(pendingRequests)
+      ? pendingRequests
+          .filter((p: any) => p.requesterId === me?.id)
+          .map((p: any) => p.addresseeId)
+      : [],
+  );
+  const pendingReceivedIds = new Set<string>(
+    Array.isArray(pendingRequests)
+      ? pendingRequests
+          .filter((p: any) => p.addresseeId === me?.id)
+          .map((p: any) => p.requesterId)
+      : [],
+  );
+
+  const members: any[] = Array.isArray(membersData)
+    ? membersData
+    : ((membersData as any)?.items ?? []);
   const contributions: any[] = Array.isArray(contribsData) ? contribsData : [];
-  const events: any[] = Array.isArray(eventsData) ? eventsData : (eventsData as any)?.items ?? [];
+  const events: any[] = Array.isArray(eventsData)
+    ? eventsData
+    : ((eventsData as any)?.items ?? []);
 
-  if (isLoading) return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>;
-  if (!community) return <Empty description="Community not found" style={{ marginTop: 80 }} />;
+  if (isLoading)
+    return (
+      <div style={{ textAlign: "center", padding: 80 }}>
+        <Spin size="large" />
+      </div>
+    );
+  if (!community)
+    return (
+      <Empty description="Community not found" style={{ marginTop: 80 }} />
+    );
 
   return (
     <div style={{ position: "relative" }}>
@@ -158,17 +242,6 @@ const CommunityDetailPage: React.FC = () => {
                   ))}
                 </Avatar.Group>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: "var(--c-success)",
-                      boxShadow: "0 0 10px rgba(16,185,129,0.5)",
-                    }}
-                  />
                   <Text
                     style={{
                       color: "var(--c-text-bright)",
@@ -176,7 +249,8 @@ const CommunityDetailPage: React.FC = () => {
                       fontSize: 13,
                     }}
                   >
-                    3 online right now
+                    {members.length}{" "}
+                    {members.length === 1 ? "member" : "members"}
                   </Text>
                 </div>
               </div>
@@ -198,15 +272,42 @@ const CommunityDetailPage: React.FC = () => {
             {community.role ? (
               <>
                 <Button
-                  icon={<SettingOutlined />}
+                  icon={<BellOutlined />}
                   style={{
                     background: "var(--c-bg-hover)",
                     borderColor: "var(--c-glass-border)",
                     color: "var(--c-text-muted)",
+                    borderRadius: 12,
                   }}
                 >
-                  Settings
+                  Notifications
                 </Button>
+                {(community.role === "owner" ||
+                  community.role === "Owner" ||
+                  community.role === "moderator" ||
+                  community.role === "Moderator") && (
+                  <Button
+                    icon={<SettingOutlined />}
+                    onClick={() => {
+                      form.setFieldsValue({
+                        name: community.name,
+                        description: community.description,
+                        visibility: community.visibility,
+                        tags: community.tags?.join(', ') || '',
+                        coverUrl: community.coverUrl || '',
+                      });
+                      setIsSettingsOpen(true);
+                    }}
+                    style={{
+                      background: "var(--c-bg-hover)",
+                      borderColor: "var(--c-glass-border)",
+                      color: "var(--c-text-muted)",
+                      borderRadius: 12,
+                    }}
+                  >
+                    Settings
+                  </Button>
+                )}
                 <Button
                   danger
                   onClick={() => leaveMut.mutate(community.id)}
@@ -348,25 +449,8 @@ const CommunityDetailPage: React.FC = () => {
               </span>
             ),
             children: (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: 60,
-                  color: "var(--c-text-dim)",
-                }}
-              >
-                <ProjectOutlined
-                  style={{ fontSize: 40, marginBottom: 16, display: "block" }}
-                />
-                Kanban board — navigate to{" "}
-                <a
-                  onClick={() =>
-                    navigate(`/dashboard/communities/${slug}/tasks`)
-                  }
-                  style={{ color: "var(--c-accent-soft)" }}
-                >
-                  full board view
-                </a>
+              <div style={{ marginTop: 16 }}>
+                <KanbanPage />
               </div>
             ),
           },
@@ -444,9 +528,14 @@ const CommunityDetailPage: React.FC = () => {
                   >
                     {members.map((member: any) => {
                       const user = member.user ?? member;
+                      const userId = user.id ?? member.userId;
                       const displayName = user.displayName ?? "Unknown";
                       const username = user.username ?? "?";
                       const role = member.role ?? "Member";
+                      const isCurrentUser = userId === me?.id;
+                      const isFriend = friendUserIds.has(userId);
+                      const isPendingSent = pendingSentIds.has(userId);
+                      const isPendingReceived = pendingReceivedIds.has(userId);
                       return (
                         <div
                           key={member.id ?? user.id}
@@ -495,17 +584,80 @@ const CommunityDetailPage: React.FC = () => {
                               </Text>
                             </div>
                           </Space>
-                          <Tag
-                            color={
-                              role === "Owner" || role === "owner"
-                                ? "purple"
-                                : role === "Moderator" || role === "moderator"
-                                  ? "blue"
-                                  : "default"
-                            }
-                          >
-                            {role}
-                          </Tag>
+                          <Space size={8}>
+                            <Tag
+                              color={
+                                role === "Owner" || role === "owner"
+                                  ? "purple"
+                                  : role === "Moderator" || role === "moderator"
+                                    ? "blue"
+                                    : "default"
+                              }
+                            >
+                              {role}
+                            </Tag>
+                            {!isCurrentUser &&
+                              (isFriend ? (
+                                <Tooltip title="Already friends">
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    icon={<CheckOutlined />}
+                                    style={{
+                                      color: "var(--c-success, #52c41a)",
+                                      borderRadius: 8,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate("/dashboard/messaging");
+                                    }}
+                                  >
+                                    Friends
+                                  </Button>
+                                </Tooltip>
+                              ) : isPendingSent ? (
+                                <Button
+                                  size="small"
+                                  disabled
+                                  style={{ borderRadius: 8, fontSize: 12 }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Request Sent
+                                </Button>
+                              ) : isPendingReceived ? (
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  style={{
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    background: "var(--c-accent)",
+                                    border: "none",
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate("/dashboard/messaging");
+                                  }}
+                                >
+                                  Respond
+                                </Button>
+                              ) : (
+                                <Tooltip title="Send friend request">
+                                  <Button
+                                    size="small"
+                                    icon={<UserAddOutlined />}
+                                    style={{ borderRadius: 8, fontSize: 12 }}
+                                    loading={sendFriendReqMut.isPending}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      sendFriendReqMut.mutate(userId);
+                                    }}
+                                  >
+                                    Add Friend
+                                  </Button>
+                                </Tooltip>
+                              ))}
+                          </Space>
                         </div>
                       );
                     })}
@@ -587,71 +739,26 @@ const CommunityDetailPage: React.FC = () => {
             display: "flex",
             flexDirection: "column",
             gap: 16,
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-            <Avatar
-              size={36}
-              style={{ background: "var(--c-accent)", flexShrink: 0 }}
-            >
-              A
-            </Avatar>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                padding: "12px 16px",
-                borderRadius: "0 16px 16px 16px",
-                maxWidth: "80%",
-              }}
-            >
-              <Text
-                style={{
-                  color: "var(--c-text-base)",
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                Hey all! The new RAG pipeline is up. Could someone review the
-                benchmark scores?
-              </Text>
-            </div>
-          </div>
-          <div
+          <MessageOutlined
+            style={{ fontSize: 32, color: "var(--c-text-dim)" }}
+          />
+          <Text
             style={{
-              display: "flex",
-              gap: 12,
-              alignSelf: "flex-end",
-              flexDirection: "row-reverse",
-              alignItems: "flex-start",
+              color: "var(--c-text-dim)",
+              fontSize: 13,
+              textAlign: "center",
             }}
           >
-            <Avatar
-              size={36}
-              style={{ background: "var(--c-success)", flexShrink: 0 }}
-            >
-              U
-            </Avatar>
-            <div
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(124,106,239,0.2) 0%, rgba(124,106,239,0.4) 100%)",
-                padding: "12px 16px",
-                borderRadius: "16px 0 16px 16px",
-                border: "1px solid rgba(124,106,239,0.3)",
-                maxWidth: "80%",
-              }}
-            >
-              <Text
-                style={{
-                  color: "var(--c-text-bright)",
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                Awesome, I am looking at it right now. Looks incredibly fast! ⚡
-              </Text>
-            </div>
-          </div>
+            Community chat — messages will appear here.
+            <br />
+            <span style={{ fontSize: 11, opacity: 0.7 }}>
+              Start a conversation!
+            </span>
+          </Text>
         </div>
         <div
           style={{
@@ -716,6 +823,56 @@ const CommunityDetailPage: React.FC = () => {
           }}
         />
       </motion.div>
+
+      <Modal
+        title="Community Settings"
+        open={isSettingsOpen}
+        onCancel={() => setIsSettingsOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(values) => {
+            const formattedTags = values.tags
+              ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+              : [];
+            updateMut.mutate({
+              id: community.id,
+              data: {
+                ...values,
+                tags: formattedTags,
+              },
+            }, {
+              onSuccess: () => setIsSettingsOpen(false)
+            });
+          }}
+        >
+          <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Description" name="description">
+            <Input.TextArea rows={4} />
+          </Form.Item>
+          <Form.Item label="Visibility" name="visibility">
+            <Select>
+              <Select.Option value="public">Public</Select.Option>
+              <Select.Option value="private">Private</Select.Option>
+              <Select.Option value="invite_only">Invite Only</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Tags (comma separated)" name="tags">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Cover URL" name="coverUrl">
+            <Input />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={updateMut.isPending} block>
+            Save Changes
+          </Button>
+        </Form>
+      </Modal>
+
     </div>
   );
 };

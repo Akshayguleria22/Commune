@@ -22,6 +22,9 @@ const SettingsPage = React.lazy(() => import('./modules/settings/pages/SettingsP
 const MessagingPage = React.lazy(
   () => import("./modules/messaging/pages/MessagingPage"),
 );
+const NotificationsPage = React.lazy(
+  () => import("./modules/notification/pages/NotificationsPage"),
+);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -84,7 +87,7 @@ const AppInner: React.FC = () => {
               >
                 <Route
                   index
-                  element={<Navigate to="/dashboard/communities" replace />}
+                  element={<DashboardPage />}
                 />
                 <Route path="communities" element={<CommunitiesPage />} />
                 <Route
@@ -101,7 +104,7 @@ const AppInner: React.FC = () => {
                 <Route path="portfolio/:username" element={<PortfolioPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="messages" element={<MessagingPage />} />
-                <Route path="notifications" element={<DashboardPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
               </Route>
 
               {/* Legacy redirect */}

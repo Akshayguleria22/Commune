@@ -1,0 +1,2 @@
+src/modules/collaboration/pages/KanbanPage.tsx(3,100): error TS6133: 'Empty' is declared but its value is never read.
+src/modules/settings/pages/SettingsPage.tsx(7,48): error TS2724: '"@ant-design/icons"' has no exported member named 'PaletteOutlined'. Did you mean 'AlertOutlined'?

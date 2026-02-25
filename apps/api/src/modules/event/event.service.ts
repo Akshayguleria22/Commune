@@ -42,7 +42,7 @@ export class EventService {
   ): Promise<PaginatedResponseDto<Event>> {
     const qb = this.eventRepo.createQueryBuilder('e')
       .where('e.community_id = :communityId', { communityId })
-      .orderBy('e.starts_at', 'ASC');
+      .orderBy('e.startsAt', 'ASC');
 
     if (status) {
       qb.andWhere('e.status = :status', { status });
@@ -74,7 +74,7 @@ export class EventService {
     return this.eventRepo.createQueryBuilder('e')
       .where('e.status = :status', { status: EventStatus.PUBLISHED })
       .andWhere('e.starts_at > NOW()')
-      .orderBy('e.starts_at', 'ASC')
+      .orderBy('e.startsAt', 'ASC')
       .take(limit)
       .getMany();
   }

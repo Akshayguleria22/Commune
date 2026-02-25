@@ -5,6 +5,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CommunityService } from './community.service';
 import { CreateCommunityDto, UpdateCommunityDto, CreateRoleDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators';
 import { PaginationDto } from '../../shared/dto';
 
@@ -25,19 +26,25 @@ export class CommunityController {
   }
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'List public communities' })
   async findAll(
+    @CurrentUser('id') userId: string | null,
     @Query() pagination: PaginationDto,
     @Query('tags') tags?: string,
   ) {
     const tagArray = tags ? tags.split(',').map(t => t.trim()) : undefined;
-    return this.communityService.findAll(pagination, tagArray);
+    return this.communityService.findAll(pagination, tagArray, userId || undefined);
   }
 
   @Get(':slug')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get community by slug' })
-  async findBySlug(@Param('slug') slug: string) {
-    return this.communityService.findBySlug(slug);
+  async findBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser('id') userId: string | null,
+  ) {
+    return this.communityService.findBySlug(slug, userId || undefined);
   }
 
   @Patch(':id')

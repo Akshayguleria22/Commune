@@ -33,6 +33,13 @@ const EventsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: communities } = useCommunities();
   const communityList: any[] = Array.isArray(communities) ? communities : (communities as any)?.items ?? [];
+  const ownedCommunities = communityList.filter(
+    (c: any) =>
+      c.role === "owner" ||
+      c.role === "Owner" ||
+      c.role === "moderator" ||
+      c.role === "Moderator",
+  );
 
   // Fetch events from all user communities
   const { data: allEvents, isLoading } = useQuery({
@@ -68,6 +75,17 @@ const EventsPage: React.FC = () => {
     onError: (err: any) => {
       message.error(err?.response?.data?.message || 'Failed to create event');
     },
+  });
+
+  const deleteEvent = useMutation({
+    mutationFn: ({ communityId, eventId }: { communityId: string, eventId: string }) => eventsApi.delete(communityId, eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-events'] });
+      message.success('Event deleted');
+    },
+    onError: () => {
+      message.error('Failed to delete event');
+    }
   });
 
   const { upcoming, past, totalRsvps } = useMemo(() => {
@@ -236,6 +254,12 @@ const EventsPage: React.FC = () => {
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsModalOpen(true)}
+              disabled={ownedCommunities.length === 0}
+              title={
+                ownedCommunities.length === 0
+                  ? "You need to own or moderate a community to create events"
+                  : undefined
+              }
               style={{
                 background: "var(--c-accent)",
                 border: "none",
@@ -344,6 +368,20 @@ const EventsPage: React.FC = () => {
                           maxAttendees={e.maxAttendees}
                           tags={e.tags ?? []}
                           organizer={e.organizer}
+                          onDelete={
+                            ownedCommunities.some((c: any) => c.id === e.communityId)
+                              ? () => {
+                                  Modal.confirm({
+                                    title: "Are you sure you want to delete this event?",
+                                    content: "This action cannot be undone.",
+                                    okText: "Yes, delete",
+                                    okType: "danger",
+                                    cancelText: "No",
+                                    onOk: () => deleteEvent.mutate({ communityId: e.communityId, eventId: e.id })
+                                  });
+                                }
+                              : undefined
+                          }
                         />
                       </motion.div>
                     ))}
@@ -392,6 +430,20 @@ const EventsPage: React.FC = () => {
                           maxAttendees={e.maxAttendees}
                           tags={e.tags ?? []}
                           organizer={e.organizer}
+                          onDelete={
+                            ownedCommunities.some((c: any) => c.id === e.communityId)
+                              ? () => {
+                                  Modal.confirm({
+                                    title: "Are you sure you want to delete this event?",
+                                    content: "This action cannot be undone.",
+                                    okText: "Yes, delete",
+                                    okType: "danger",
+                                    cancelText: "No",
+                                    onOk: () => deleteEvent.mutate({ communityId: e.communityId, eventId: e.id })
+                                  });
+                                }
+                              : undefined
+                          }
                         />
                       </motion.div>
                     ))}
@@ -434,7 +486,7 @@ const EventsPage: React.FC = () => {
             <Select
               placeholder="Select community"
               size="large"
-              options={communityList.map((c: any) => ({
+              options={ownedCommunities.map((c: any) => ({
                 value: c.id,
                 label: c.name,
               }))}

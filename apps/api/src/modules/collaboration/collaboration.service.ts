@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Task, TaskAssignment, TaskComment } from './entities';
 import { CreateTaskDto, UpdateTaskDto, CreateTaskCommentDto } from './dto';
 import { TaskStatus } from '../../shared/enums';
 import { PaginationDto, PaginatedResponseDto } from '../../shared/dto';
+import { CommunityService } from '../community/community.service';
 
 @Injectable()
 export class CollaborationService {
@@ -19,9 +20,22 @@ export class CollaborationService {
     @InjectRepository(TaskComment)
     private readonly commentRepo: Repository<TaskComment>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly communityService: CommunityService,
   ) {}
 
   async createTask(communityId: string, userId: string, dto: CreateTaskDto): Promise<Task> {
+    const membership = await this.communityService.checkMembership(communityId, userId);
+    if (!membership) {
+      throw new ForbiddenException('You must be a member of this community to create tasks');
+    }
+    if (!membership.role.permissions.create_tasks && !membership.role.permissions.manage_tasks) {
+      throw new ForbiddenException('You do not have permission to create tasks');
+    }
+
+    if (dto.assigneeIds?.length && !membership.role.permissions.manage_tasks) {
+      throw new ForbiddenException('Only admins/owners can assign tasks to others');
+    }
+
     const task = this.taskRepo.create({
       ...dto,
       communityId,
@@ -50,7 +64,7 @@ export class CollaborationService {
     const qb = this.taskRepo.createQueryBuilder('t')
       .where('t.community_id = :communityId', { communityId })
       .orderBy('t.position', 'ASC')
-      .addOrderBy('t.created_at', 'DESC');
+      .addOrderBy('t.createdAt', 'DESC');
 
     if (status) {
       qb.andWhere('t.status = :status', { status });
@@ -76,8 +90,33 @@ export class CollaborationService {
     return task;
   }
 
-  async updateTask(taskId: string, dto: UpdateTaskDto): Promise<Task> {
+  async findPersonalTasks(userId: string): Promise<Task[]> {
+    const qb = this.taskRepo.createQueryBuilder('t')
+      .leftJoin(TaskAssignment, 'ta', 'ta.task_id = t.id')
+      .where(new Brackets((qb: any) => {
+        qb.where('ta.user_id = :userId', { userId })
+          .orWhere('t.creator_id = :userId', { userId });
+      }))
+      .orderBy('t.status', 'ASC')
+      .addOrderBy('t.createdAt', 'DESC');
+
+    return qb.getMany();
+  }
+
+  async updateTask(taskId: string, userId: string, dto: UpdateTaskDto): Promise<Task> {
     const task = await this.findTaskById(taskId);
+
+    // Authorization check
+    const membership = await this.communityService.checkMembership(task.communityId, userId);
+    if (!membership) {
+      throw new ForbiddenException('You must be a member of this community to update tasks');
+    }
+
+    // Only creator or someone with manage_tasks can update
+    if (task.creatorId !== userId && !membership.role.permissions.manage_tasks) {
+      throw new ForbiddenException('You do not have permission to update this task');
+    }
+
     const previousStatus = task.status;
 
     Object.assign(task, dto);

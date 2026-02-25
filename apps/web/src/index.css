@@ -188,26 +188,78 @@ body::after {
 }
 .ant-btn:hover { transform: translateY(-1px); }
 .ant-btn:active { transform: translateY(0) scale(0.98); }
-.ant-btn-primary { background: var(--c-accent) !important; border-color: var(--c-accent) !important; }
-.ant-btn-primary:hover { background: var(--c-accent-soft) !important; border-color: var(--c-accent-soft) !important; }
+.ant-btn-primary { background: var(--c-accent) !important; border-color: var(--c-accent) !important; color: #FFFFFF !important; }
+.ant-btn-primary:hover { background: var(--c-accent-soft) !important; border-color: var(--c-accent-soft) !important; color: #FFFFFF !important; }
 
 .ant-input,
-.ant-input-password .ant-input {
+.ant-input-password .ant-input,
+.ant-input-affix-wrapper,
+.ant-input-affix-wrapper .ant-input {
   border-radius: var(--radius-sm) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--c-glass-highlight) !important;
   border-color: var(--c-glass-border) !important;
   color: var(--c-text-bright) !important;
   transition: all var(--dur-fast) ease !important;
 }
+/* Fix: prevent browser autofill white bg */
+.ant-input:-webkit-autofill,
+.ant-input:-webkit-autofill:hover,
+.ant-input:-webkit-autofill:focus,
+.ant-input:-webkit-autofill:active,
+.ant-input-affix-wrapper .ant-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--c-bg-surface) inset !important;
+  -webkit-text-fill-color: var(--c-text-bright) !important;
+  caret-color: var(--c-text-bright) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
 .ant-input:focus,
 .ant-input-focused,
 .ant-input-affix-wrapper:focus,
-.ant-input-affix-wrapper-focused {
-  background: rgba(255, 255, 255, 0.04) !important;
+.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper:focus-within {
+  background: var(--c-glass-highlight) !important;
   border-color: rgba(124, 106, 239, 0.4) !important;
   box-shadow: 0 0 0 3px rgba(124, 106, 239, 0.1) !important;
 }
 .ant-input::placeholder { color: var(--c-text-dim) !important; }
+
+/* TextArea */
+.ant-input-textarea .ant-input,
+textarea.ant-input {
+  background: var(--c-glass-highlight) !important;
+  border-color: var(--c-glass-border) !important;
+  color: var(--c-text-bright) !important;
+}
+.ant-input-textarea .ant-input:focus,
+textarea.ant-input:focus {
+  background: var(--c-glass-highlight) !important;
+  border-color: rgba(124, 106, 239, 0.4) !important;
+}
+
+/* InputNumber */
+.ant-input-number {
+  background: var(--c-glass-highlight) !important;
+  border-color: var(--c-glass-border) !important;
+}
+.ant-input-number .ant-input-number-input {
+  color: var(--c-text-bright) !important;
+  background: transparent !important;
+}
+
+/* DatePicker */
+.ant-picker {
+  background: var(--c-glass-highlight) !important;
+  border-color: var(--c-glass-border) !important;
+  color: var(--c-text-bright) !important;
+}
+.ant-picker .ant-picker-input > input {
+  color: var(--c-text-bright) !important;
+}
+.ant-picker-panel-container {
+  background: var(--c-bg-elevated) !important;
+  border: 1px solid var(--c-glass-border) !important;
+  border-radius: var(--radius-md) !important;
+}
 
 .ant-card {
   border-radius: var(--radius-lg) !important;
@@ -218,10 +270,12 @@ body::after {
 
 .ant-select-selector {
   border-radius: var(--radius-sm) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--c-glass-highlight) !important;
   border-color: var(--c-glass-border) !important;
   color: var(--c-text-bright) !important;
 }
+.ant-select-selection-item { color: var(--c-text-bright) !important; }
+.ant-select-arrow { color: var(--c-text-dim) !important; }
 
 .ant-menu-dark { background: transparent !important; }
 .ant-menu-dark .ant-menu-item {
@@ -311,4 +365,163 @@ body::after {
   animation: pulse-subtle 2s ease-in-out infinite;
   background: var(--c-glass-base);
   border-radius: var(--radius-sm);
+}
+
+/* ═══════════════════════════════════════
+   LIGHT MODE COMPREHENSIVE FIXES
+   ═══════════════════════════════════════ */
+[data-theme='light'] .ant-input,
+[data-theme='light'] .ant-input-password .ant-input,
+[data-theme='light'] .ant-input-affix-wrapper,
+[data-theme='light'] .ant-input-affix-wrapper .ant-input {
+  background: #F9FAFB !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-input:-webkit-autofill,
+[data-theme='light'] .ant-input:-webkit-autofill:hover,
+[data-theme='light'] .ant-input:-webkit-autofill:focus,
+[data-theme='light'] .ant-input:-webkit-autofill:active,
+[data-theme='light'] .ant-input-affix-wrapper .ant-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #F9FAFB inset !important;
+  -webkit-text-fill-color: var(--c-text-bright) !important;
+  caret-color: var(--c-text-bright) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+[data-theme='light'] .ant-input:focus,
+[data-theme='light'] .ant-input-affix-wrapper:focus,
+[data-theme='light'] .ant-input-affix-wrapper:focus-within,
+[data-theme='light'] .ant-input-affix-wrapper-focused {
+  background: #FFFFFF !important;
+  border-color: var(--c-accent) !important;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1) !important;
+}
+[data-theme='light'] .ant-input::placeholder {
+  color: #9CA3AF !important;
+}
+[data-theme='light'] textarea.ant-input,
+[data-theme='light'] .ant-input-textarea .ant-input {
+  background: #F9FAFB !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-select-selector {
+  background: #F9FAFB !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-select-selection-item {
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-input-number {
+  background: #F9FAFB !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+[data-theme='light'] .ant-input-number .ant-input-number-input {
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-picker {
+  background: #F9FAFB !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Light mode — text visibility on image overlays */
+[data-theme='light'] .ant-card {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .ant-card-head {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Light mode — menu items */
+[data-theme='light'] .ant-menu-item {
+  color: var(--c-text-base) !important;
+}
+[data-theme='light'] .ant-menu-item:hover {
+  color: var(--c-text-bright) !important;
+  background: rgba(108, 92, 231, 0.06) !important;
+}
+[data-theme='light'] .ant-menu-item-selected {
+  color: var(--c-accent) !important;
+  background: rgba(108, 92, 231, 0.1) !important;
+}
+
+/* Light mode — tabs */
+[data-theme='light'] .ant-tabs .ant-tabs-tab {
+  color: var(--c-text-muted) !important;
+}
+[data-theme='light'] .ant-tabs .ant-tabs-tab:hover {
+  color: var(--c-text-bright) !important;
+}
+[data-theme='light'] .ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--c-accent) !important;
+}
+
+/* Light mode — tags */
+[data-theme='light'] .ant-tag {
+  color: var(--c-text-base) !important;
+}
+
+/* Light mode — modal */
+[data-theme='light'] .ant-modal-content {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .ant-modal-header {
+  background: #FFFFFF !important;
+}
+
+/* Light mode — dropdown */
+[data-theme='light'] .ant-select-dropdown,
+[data-theme='light'] .ant-dropdown-menu {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Light mode — tooltips */
+[data-theme='light'] .ant-tooltip-inner {
+  background: #FFFFFF !important;
+  color: var(--c-text-bright) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Light mode — search bar in header */
+[data-theme='light'] .ant-input-search .ant-input,
+[data-theme='light'] [style*="background: rgba(0,0,0,0.3)"] {
+  background: #F3F4F6 !important;
+}
+
+/* Light mode — switch */
+[data-theme='light'] .ant-switch {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+[data-theme='light'] .ant-switch-checked {
+  background: var(--c-accent) !important;
+}
+
+/* Light mode — progress */
+[data-theme='light'] .ant-progress-inner {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Light mode — badges */
+[data-theme='light'] .ant-badge-count {
+  box-shadow: 0 0 0 2px #FFFFFF !important;
+}
+
+/* Light mode — form labels */
+[data-theme='light'] .ant-form-item-label > label {
+  color: var(--c-text-base) !important;
+}
+
+/* Light mode — empty */
+[data-theme='light'] .ant-empty-description {
+  color: var(--c-text-muted) !important;
+}
+
+/* Light mode — divider */
+[data-theme='light'] .ant-divider {
+  border-color: rgba(0, 0, 0, 0.06) !important;
 }

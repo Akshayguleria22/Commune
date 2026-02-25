@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tag, Space, Avatar, Typography } from 'antd';
-import { CalendarOutlined, EnvironmentOutlined, VideoCameraOutlined, UserOutlined } from '@ant-design/icons';
+import { CalendarOutlined, EnvironmentOutlined, VideoCameraOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 
@@ -18,6 +18,7 @@ interface EventCardProps {
   tags: string[];
   organizer?: { displayName: string; avatarUrl: string | null };
   onClick?: () => void;
+  onDelete?: () => void;
 }
 
 const typeConfig = {
@@ -28,7 +29,7 @@ const typeConfig = {
 
 const EventCard: React.FC<EventCardProps> = ({
   title, description, type, status: _status, startsAt, endsAt,
-  rsvpCount, maxAttendees, tags: _tags, organizer, onClick,
+  rsvpCount, maxAttendees, tags: _tags, organizer, onClick, onDelete
 }) => {
   const tc = typeConfig[type] || typeConfig.online;
   const startDate = dayjs(startsAt);
@@ -132,6 +133,17 @@ const EventCard: React.FC<EventCardProps> = ({
                     {organizer.displayName}
                   </Text>
                 </Space>
+              )}
+
+              {onDelete && (
+                <div style={{ marginLeft: 'auto' }}>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <DeleteOutlined 
+                      style={{ color: 'var(--c-error, #ef4444)', fontSize: 16, cursor: 'pointer', padding: 4 }} 
+                      onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                    />
+                  </motion.div>
+                </div>
               )}
             </div>
           </div>

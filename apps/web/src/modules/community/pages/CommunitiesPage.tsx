@@ -278,6 +278,8 @@ const CommunitiesPage: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
           marginBottom: 32,
           padding: "16px 20px",
           background: "var(--c-bg-surface)",
@@ -288,7 +290,7 @@ const CommunitiesPage: React.FC = () => {
           zIndex: 1,
         }}
       >
-        <Space size={16} style={{ width: "100%" }}>
+        <Space size={16} style={{ width: "100%", flexWrap: "wrap" }}>
           <Input
             prefix={
               <SearchOutlined
@@ -299,9 +301,9 @@ const CommunitiesPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
-              width: 360,
-              background: "rgba(0,0,0,0.3)",
-              borderColor: "rgba(255,255,255,0.05)",
+              flex: "1 1 200px",
+              minWidth: 200,
+              maxWidth: 400,
               borderRadius: 14,
               height: 48,
               fontSize: 15,
@@ -311,7 +313,7 @@ const CommunitiesPage: React.FC = () => {
           <Select
             value={filter}
             onChange={setFilter}
-            style={{ width: 200 }}
+            style={{ minWidth: 180 }}
             size="large"
             popupMatchSelectWidth={false}
             options={[
@@ -328,6 +330,8 @@ const CommunitiesPage: React.FC = () => {
             color: "var(--c-text-dim)",
             fontWeight: 500,
             fontSize: 14,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
         >
           <TeamOutlined />{" "}

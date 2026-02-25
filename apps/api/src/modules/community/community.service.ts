@@ -82,10 +82,21 @@ export class CommunityService {
     return community;
   }
 
-  async findAll(pagination: PaginationDto, tags?: string[]): Promise<PaginatedResponseDto<Community>> {
+  async findAll(pagination: PaginationDto, tags?: string[], userId?: string): Promise<PaginatedResponseDto<Community>> {
     const qb = this.communityRepo.createQueryBuilder('c')
       .where('c.visibility = :visibility', { visibility: CommunityVisibility.PUBLIC })
-      .orderBy('c.member_count', 'DESC');
+      .orderBy('c.memberCount', 'DESC');
+
+    if (userId) {
+      qb.leftJoinAndMapOne(
+        'c.membership',
+        Membership,
+        'm',
+        'm.community_id = c.id AND m.user_id = :userId AND m.status = :status',
+        { userId, status: MembershipStatus.ACTIVE }
+      );
+      qb.leftJoinAndSelect('m.role', 'role');
+    }
 
     if (tags && tags.length > 0) {
       qb.andWhere('c.tags && :tags', { tags });
@@ -103,6 +114,14 @@ export class CommunityService {
     const hasMore = communities.length > limit;
     if (hasMore) communities.pop();
 
+    if (userId) {
+      communities.forEach((c: any) => {
+        if (c.membership && c.membership.role) {
+          c.role = c.membership.role.name;
+        }
+      });
+    }
+
     const nextCursor = hasMore && communities.length > 0
       ? Buffer.from(communities[communities.length - 1].id).toString('base64')
       : null;
@@ -110,17 +129,34 @@ export class CommunityService {
     return new PaginatedResponseDto(communities, nextCursor, hasMore);
   }
 
-  async findBySlug(slug: string): Promise<Community> {
+  async findBySlug(slug: string, userId?: string): Promise<Community> {
+    const qb = this.communityRepo.createQueryBuilder('c');
+
     // Try slug first, then fall back to id (UUID) for resilience
-    let community = await this.communityRepo.findOne({ where: { slug } });
-    if (!community) {
-      // Check if the value is a UUID — if so, try by id
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-      if (isUuid) {
-        community = await this.communityRepo.findOne({ where: { id: slug } });
-      }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+    if (isUuid) {
+      qb.where('c.id = :slug OR c.slug = :slug', { slug });
+    } else {
+      qb.where('c.slug = :slug', { slug });
     }
+
+    if (userId) {
+      qb.leftJoinAndMapOne(
+        'c.membership',
+        Membership,
+        'm',
+        'm.community_id = c.id AND m.user_id = :userId AND m.status = :status',
+        { userId, status: MembershipStatus.ACTIVE }
+      );
+      qb.leftJoinAndSelect('m.role', 'role');
+    }
+
+    const community = await qb.getOne();
     if (!community) throw new NotFoundException('Community not found');
+
+    if (userId && (community as any).membership && (community as any).membership.role) {
+      (community as any).role = (community as any).membership.role.name;
+    }
     return community;
   }
 
@@ -187,7 +223,8 @@ export class CommunityService {
       .where('m.community_id = :communityId', { communityId })
       .andWhere('m.status = :status', { status: MembershipStatus.ACTIVE })
       .leftJoinAndSelect('m.role', 'role')
-      .orderBy('m.joined_at', 'DESC');
+      .leftJoinAndSelect('m.user', 'user')
+      .orderBy('m.joinedAt', 'DESC');
 
     const limit = pagination.limit || 20;
     qb.take(limit + 1);
@@ -210,7 +247,7 @@ export class CommunityService {
       .where('c.community_id = :communityId', { communityId })
       .andWhere("c.contributed_at >= CURRENT_DATE - INTERVAL ':days days'", { days })
       .groupBy('c.contributed_at')
-      .orderBy('c.contributed_at', 'ASC');
+      .orderBy('c.contributedAt', 'ASC');
 
     if (userId) {
       qb.andWhere('c.user_id = :userId', { userId });

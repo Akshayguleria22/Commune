@@ -14,12 +14,15 @@ import {
   LogoutOutlined,
   SettingOutlined,
   MessageOutlined,
+  HomeOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useAuthStore } from '../stores/auth.store';
 import { useUIStore } from '../stores/ui.store';
 import { useSearch } from '../shared/hooks/useSearch';
 import { useUnreadCount } from '../shared/hooks/useNotifications';
+import CommuneLogo from "../shared/components/CommuneLogo";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -56,6 +59,11 @@ const AppLayout: React.FC = () => {
   const isDark = theme === 'dark';
 
   const menuItems = [
+    {
+      key: "/dashboard",
+      icon: <HomeOutlined />,
+      label: "Home",
+    },
     {
       key: "/dashboard/communities",
       icon: <TeamOutlined />,
@@ -133,18 +141,10 @@ const AppLayout: React.FC = () => {
           }}
           onClick={() => navigate("/")}
         >
-          <span
-            style={{
-              fontSize: sidebarCollapsed ? 22 : 18,
-              fontFamily: "'Outfit', sans-serif",
-              fontWeight: 800,
-              color: "var(--c-text-bright)",
-              letterSpacing: sidebarCollapsed ? 0 : 3,
-              transition: "all 0.3s ease",
-            }}
-          >
-            {sidebarCollapsed ? "C" : "COMMUNE"}
-          </span>
+          <CommuneLogo
+            size={sidebarCollapsed ? 26 : 24}
+            collapsed={sidebarCollapsed}
+          />
         </div>
 
         {/* Navigation */}
@@ -421,6 +421,8 @@ const AppLayout: React.FC = () => {
             minHeight: "calc(100vh - 64px)",
             position: "relative",
             zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <motion.div
@@ -428,6 +430,7 @@ const AppLayout: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
           >
             <Outlet />
           </motion.div>
@@ -437,7 +440,7 @@ const AppLayout: React.FC = () => {
             style={{
               borderTop: "1px solid var(--c-glass-border)",
               padding: "24px 0 16px",
-              marginTop: 48,
+              marginTop: "auto",
               textAlign: "center",
             }}
           >
@@ -546,10 +549,33 @@ const AppLayout: React.FC = () => {
         </div>
         <div style={{ maxHeight: 380, overflowY: "auto", padding: "4px 0" }}>
           {search.query.length < 2 ? (
-            <div style={{ padding: "36px 16px", textAlign: "center" }}>
-              <Text style={{ color: "var(--c-text-dim)", fontSize: 13 }}>
-                Type at least 2 characters
+            <div style={{ padding: "16px" }}>
+              <Text style={{ color: "var(--c-text-muted)", fontSize: 12, fontWeight: 600, letterSpacing: 1, marginBottom: 8, display: "block" }}>
+                QUICK ACTIONS
               </Text>
+              <List
+                dataSource={[
+                  { icon: <PlusOutlined />, title: "Create Community", action: () => { search.close(); navigate("/dashboard/communities"); } },
+                  { icon: <ProjectOutlined />, title: "New Task", action: () => { search.close(); navigate("/dashboard/tasks"); } },
+                  { icon: <CalendarOutlined />, title: "New Event", action: () => { search.close(); navigate("/dashboard/events"); } },
+                  { icon: <HomeOutlined />, title: "Go to Command Center", action: () => { search.close(); navigate("/dashboard"); } },
+                  { icon: <CompassOutlined />, title: "Discover", action: () => { search.close(); navigate("/dashboard/discover"); } },
+                ]}
+                renderItem={(item: any) => (
+                  <List.Item
+                    style={{ padding: "10px 16px", cursor: "pointer", borderBottom: 0, borderRadius: 8 }}
+                    onClick={item.action}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--c-accent-muted)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <Space size={12}>
+                      <div style={{ color: "var(--c-text-dim)", fontSize: 16 }}>{item.icon}</div>
+                      <Text style={{ color: "var(--c-text-bright)", fontSize: 14 }}>{item.title}</Text>
+                    </Space>
+                    <Text style={{ color: "var(--c-text-dim)", fontSize: 12 }}>Jump to</Text>
+                  </List.Item>
+                )}
+              />
             </div>
           ) : search.isLoading ? (
             <div style={{ padding: "36px 16px", textAlign: "center" }}>

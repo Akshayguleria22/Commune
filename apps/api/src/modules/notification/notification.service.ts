@@ -28,7 +28,7 @@ export class NotificationService {
     const limit = pagination.limit || 20;
     const qb = this.notifRepo.createQueryBuilder('n')
       .where('n.user_id = :userId', { userId })
-      .orderBy('n.created_at', 'DESC')
+      .orderBy('n.createdAt', 'DESC')
       .take(limit + 1);
 
     if (pagination.cursor) {

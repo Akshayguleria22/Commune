@@ -9,25 +9,86 @@ import {
   ArrowRightOutlined,
   GithubOutlined,
   UserOutlined,
+  MessageOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/auth.store';
+import CommuneLogo from "../shared/components/CommuneLogo";
 
 const { Title, Text } = Typography;
 
-const stats = [
-  { label: 'Active Communities', value: '50+' },
-  { label: 'Members', value: '3,200+' },
-  { label: 'Tasks Completed', value: '12K+' },
-  { label: 'Events Hosted', value: '800+' },
+const features = [
+  {
+    icon: <TeamOutlined />,
+    title: "Micro-Communities",
+    desc: "Create or join focused communities around technologies, projects, or interests.",
+    color: "var(--c-accent)",
+  },
+  {
+    icon: <ThunderboltOutlined />,
+    title: "Kanban Tasks",
+    desc: "Drag-and-drop task boards. Assign work and track progress together.",
+    color: "var(--c-accent-2)",
+  },
+  {
+    icon: <CalendarOutlined />,
+    title: "Events",
+    desc: "Host workshops, hackathons, and meetups with RSVP tracking.",
+    color: "var(--c-warning)",
+  },
+  {
+    icon: <SafetyCertificateOutlined />,
+    title: "Reputation",
+    desc: "Earn reputation through contributions. Show off your portfolio.",
+    color: "var(--c-success)",
+  },
+  {
+    icon: <MessageOutlined />,
+    title: "Messaging",
+    desc: "Direct messaging and community chat in real-time.",
+    color: "#36BFAA",
+  },
+  {
+    icon: <TrophyOutlined />,
+    title: "Portfolio",
+    desc: "Auto-generated developer portfolio showcasing your activity and skills.",
+    color: "#F5A623",
+  },
 ];
 
-const features = [
-  { icon: <TeamOutlined />, title: 'Micro-Communities', desc: 'Build and join tight-knit communities around specific technologies, projects, or interests.', color: 'var(--c-accent)' },
-  { icon: <ThunderboltOutlined />, title: 'Collaborative Tasks', desc: 'Kanban boards with drag-and-drop. Assign, track, and ship work together in real-time.', color: 'var(--c-accent-2)' },
-  { icon: <CalendarOutlined />, title: 'Events & Workshops', desc: 'Host online workshops, hackathons, and meetups. RSVP tracking and video integration.', color: 'var(--c-warning)' },
-  { icon: <SafetyCertificateOutlined />, title: 'Reputation System', desc: 'Earn reputation through contributions. Showcase your skills with a dynamic portfolio.', color: 'var(--c-success)' },
-];
+/* A mock screenshot card showing what the app looks like inside */
+const AppPreviewCard: React.FC<{ title: string; description: string; gradient: string }> = ({ title, description, gradient }) => (
+  <div style={{
+    borderRadius: 16, overflow: 'hidden',
+    border: '1px solid var(--c-glass-border)',
+    background: 'var(--c-bg-surface)',
+  }}>
+    {/* Simulated app header bar */}
+    <div style={{
+      height: 160, background: gradient,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative',
+    }}>
+      <div style={{
+        position: 'absolute', top: 12, left: 16,
+        display: 'flex', gap: 6,
+      }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+      </div>
+      <span style={{ color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: 1.5, opacity: 0.9 }}>
+        {title}
+      </span>
+    </div>
+    <div style={{ padding: '16px 20px' }}>
+      <Text style={{ color: 'var(--c-text-muted)', fontSize: 13, lineHeight: 1.6 }}>
+        {description}
+      </Text>
+    </div>
+  </div>
+);
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
@@ -67,7 +128,7 @@ const LandingPage: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "16px 40px",
+          padding: "12px 40px",
           position: "sticky",
           top: 0,
           zIndex: 50,
@@ -76,17 +137,9 @@ const LandingPage: React.FC = () => {
           borderBottom: "1px solid var(--c-glass-border)",
         }}
       >
-        <span
-          style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 800,
-            fontSize: 20,
-            color: "var(--c-text-bright)",
-            letterSpacing: 3,
-          }}
-        >
-          COMMUNE
-        </span>
+        <div style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+          <CommuneLogo size={30} />
+        </div>
         <Space size={12}>
           {isAuthenticated ? (
             <Space size={12} align="center">
@@ -144,10 +197,10 @@ const LandingPage: React.FC = () => {
       <section
         style={{
           textAlign: "center",
-          padding: "96px 20px 64px",
+          padding: "80px 20px 48px",
           position: "relative",
           zIndex: 1,
-          maxWidth: 860,
+          maxWidth: 800,
           margin: "0 auto",
         }}
       >
@@ -158,27 +211,12 @@ const LandingPage: React.FC = () => {
         >
           <div
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 18px",
-              borderRadius: 20,
-              background: "var(--c-accent-muted)",
-              border: "1px solid rgba(124,106,239,0.15)",
+              display: "flex",
+              justifyContent: "center",
               marginBottom: 28,
             }}
           >
-            <span
-              style={{
-                color: "var(--c-accent-soft)",
-                fontWeight: 600,
-                fontSize: 12,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
-            >
-              Community Operating System
-            </span>
+            <CommuneLogo size={48} showText={false} />
           </div>
 
           <Title
@@ -186,8 +224,8 @@ const LandingPage: React.FC = () => {
             style={{
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 900,
-              fontSize: 64,
-              lineHeight: 1.08,
+              fontSize: 56,
+              lineHeight: 1.1,
               margin: "0 auto",
               color: "var(--c-text-bright)",
             }}
@@ -208,19 +246,19 @@ const LandingPage: React.FC = () => {
           <Text
             style={{
               color: "var(--c-text-muted)",
-              fontSize: 18,
+              fontSize: 17,
               display: "block",
-              maxWidth: 520,
+              maxWidth: 500,
               margin: "20px auto 0",
               lineHeight: 1.7,
             }}
           >
             {isAuthenticated
               ? "Jump back into your communities, check tasks, and keep building."
-              : "Form micro-communities, collaborate on tasks, attend events, and grow your reputation — all in one platform."}
+              : "Form micro-communities, collaborate on tasks, attend events, and grow your developer reputation."}
           </Text>
 
-          <Space size={12} style={{ marginTop: 40 }}>
+          <Space size={12} style={{ marginTop: 36 }}>
             <Button
               type="primary"
               size="large"
@@ -234,7 +272,7 @@ const LandingPage: React.FC = () => {
                 padding: "0 32px",
               }}
             >
-              {isAuthenticated ? "Open Dashboard" : "Start Building"}{" "}
+              {isAuthenticated ? "Open Dashboard" : "Get Started Free"}{" "}
               <ArrowRightOutlined />
             </Button>
             <Button
@@ -263,10 +301,30 @@ const LandingPage: React.FC = () => {
         </motion.div>
       </section>
 
-      {/* Stats */}
+      {/* App Preview / Screenshots */}
       <section
-        style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 72px" }}
+        style={{ maxWidth: 960, margin: "0 auto", padding: "24px 20px 72px" }}
       >
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <Title
+            level={3}
+            style={{
+              textAlign: "center",
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 700,
+              fontSize: 22,
+              color: "var(--c-text-muted)",
+              marginBottom: 32,
+              letterSpacing: 0.5,
+            }}
+          >
+            See what&apos;s inside
+          </Title>
+        </motion.div>
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -274,50 +332,37 @@ const LandingPage: React.FC = () => {
           variants={stagger}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 20,
           }}
         >
-          {stats.map((s) => (
-            <motion.div
-              key={s.label}
-              variants={fadeUp}
-              style={{
-                textAlign: "center",
-                padding: "24px 12px",
-                borderRadius: 14,
-                background: "var(--c-bg-surface)",
-                border: "1px solid var(--c-glass-border)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 32,
-                  fontWeight: 800,
-                  fontFamily: "'Outfit', sans-serif",
-                  color: "var(--c-accent)",
-                }}
-              >
-                {s.value}
-              </div>
-              <div
-                style={{
-                  color: "var(--c-text-dim)",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  marginTop: 4,
-                }}
-              >
-                {s.label}
-              </div>
-            </motion.div>
-          ))}
+          <motion.div variants={fadeUp}>
+            <AppPreviewCard
+              title="COMMUNITIES"
+              description="Browse and join communities, or create your own. Each community gets its own tasks, events, and chat."
+              gradient="linear-gradient(135deg, #7C6AEF 0%, #9B8AFB 100%)"
+            />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <AppPreviewCard
+              title="KANBAN BOARD"
+              description="Drag-and-drop task management with columns for backlog, in-progress, review, and done."
+              gradient="linear-gradient(135deg, #36BFAA 0%, #4DD9C0 100%)"
+            />
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <AppPreviewCard
+              title="PORTFOLIO"
+              description="Your contribution history, reputation score, skill tags, and activity heatmap — all in one place."
+              gradient="linear-gradient(135deg, #F5A623 0%, #F7C948 100%)"
+            />
+          </motion.div>
         </motion.div>
       </section>
 
       {/* Features */}
       <section
-        style={{ maxWidth: 900, margin: "0 auto", padding: "0 20px 88px" }}
+        style={{ maxWidth: 960, margin: "0 auto", padding: "0 20px 88px" }}
       >
         <motion.div
           initial={{ opacity: 0 }}
@@ -330,7 +375,7 @@ const LandingPage: React.FC = () => {
               textAlign: "center",
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 800,
-              fontSize: 36,
+              fontSize: 34,
               color: "var(--c-text-bright)",
               marginBottom: 48,
             }}
@@ -347,7 +392,7 @@ const LandingPage: React.FC = () => {
           variants={stagger}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             gap: 16,
           }}
         >
@@ -356,7 +401,7 @@ const LandingPage: React.FC = () => {
               key={f.title}
               variants={fadeUp}
               style={{
-                padding: 28,
+                padding: 24,
                 borderRadius: 16,
                 background: "var(--c-bg-surface)",
                 border: "1px solid var(--c-glass-border)",
@@ -387,7 +432,7 @@ const LandingPage: React.FC = () => {
                   fontWeight: 700,
                   color: "var(--c-text-bright)",
                   margin: "0 0 6px",
-                  fontSize: 17,
+                  fontSize: 16,
                 }}
               >
                 {f.title}
@@ -395,7 +440,7 @@ const LandingPage: React.FC = () => {
               <Text
                 style={{
                   color: "var(--c-text-muted)",
-                  fontSize: 14,
+                  fontSize: 13,
                   lineHeight: 1.65,
                 }}
               >
@@ -410,7 +455,7 @@ const LandingPage: React.FC = () => {
       <section
         style={{
           textAlign: "center",
-          padding: "64px 20px 80px",
+          padding: "48px 20px 72px",
           position: "relative",
         }}
       >
@@ -438,7 +483,7 @@ const LandingPage: React.FC = () => {
             style={{
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 800,
-              fontSize: 38,
+              fontSize: 34,
               color: "var(--c-text-bright)",
               margin: "0 0 12px",
             }}
@@ -448,9 +493,9 @@ const LandingPage: React.FC = () => {
           <Text
             style={{
               color: "var(--c-text-muted)",
-              fontSize: 16,
+              fontSize: 15,
               display: "block",
-              marginBottom: 28,
+              marginBottom: 24,
             }}
           >
             Start building with your community today.
@@ -476,12 +521,17 @@ const LandingPage: React.FC = () => {
       <footer
         style={{
           borderTop: "1px solid var(--c-glass-border)",
-          padding: "24px 40px",
-          textAlign: "center",
+          padding: "20px 40px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
         }}
       >
+        <CommuneLogo size={20} />
         <Text style={{ color: "var(--c-text-ghost)", fontSize: 12 }}>
-          © {new Date().getFullYear()} COMMUNE · Community Operating System
+          © {new Date().getFullYear()} Commune · Community Operating System
         </Text>
       </footer>
     </div>

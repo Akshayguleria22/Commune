@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { Typography, Button, Tag, Space, Avatar, Modal, Form, Input, Select, Tooltip, Badge, Spin, Empty, message } from 'antd';
+import { useParams, useNavigate } from "react-router-dom";
+import { Typography, Button, Tag, Space, Avatar, Modal, Form, Input, Select, Tooltip, Badge, Spin, message } from 'antd';
 import {
   PlusOutlined, FilterOutlined, ClockCircleOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -13,7 +13,10 @@ import type { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCommunity } from '../../community/hooks/useCommunities';
+import {
+  useCommunity,
+  useCommunities,
+} from "../../community/hooks/useCommunities";
 import { tasksApi, type CreateTaskPayload } from '../../../api/tasks.api';
 
 const { Title, Text } = Typography;
@@ -26,6 +29,7 @@ interface TaskItem {
   assignees: { name: string; avatarUrl: string | null }[];
   dueDate: string | null;
   commentCount: number;
+  communityId: string;
 }
 
 const COLUMNS = [
@@ -226,23 +230,35 @@ const DroppableColumn: React.FC<{
 /* ═══ Main Kanban Board ═══ */
 const KanbanPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { data: communities } = useCommunities();
+  const communityList: any[] = Array.isArray(communities)
+    ? communities
+    : ((communities as any)?.items ?? []);
   const { data: community } = useCommunity(slug ?? '');
   const communityId = community?.id ?? '';
   const communityName = community?.name ?? 'Tasks';
   const queryClient = useQueryClient();
+  const [priorityFilter, setPriorityFilter] = useState<string | undefined>(
+    undefined,
+  );
 
   // Fetch tasks from API
   const { data: apiTasks, isLoading } = useQuery({
-    queryKey: ['tasks', communityId],
-    queryFn: () => tasksApi.list(communityId),
-    enabled: !!communityId,
+    queryKey: slug ? ['tasks', communityId] : ['tasks', 'personal'],
+    queryFn: () => slug ? tasksApi.list(communityId) : tasksApi.listPersonal(),
+    enabled: slug ? !!communityId : true,
   });
 
   // Mutation to update task status via API
   const updateTaskMut = useMutation({
-    mutationFn: ({ taskId, data }: { taskId: string; data: { status?: string } }) =>
-      tasksApi.update(communityId, taskId, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks', communityId] }),
+    mutationFn: ({ taskId, taskCommunityId, data }: { taskId: string; taskCommunityId: string; data: { status?: string } }) =>
+      tasksApi.update(taskCommunityId || communityId, taskId, data),
+    onSettled: () => {
+       setTimeout(() => {
+         queryClient.invalidateQueries({ queryKey: slug ? ['tasks', communityId] : ['tasks', 'personal'] });
+       }, 500);
+    }
   });
 
   const createTaskMut = useMutation({
@@ -255,35 +271,49 @@ const KanbanPage: React.FC = () => {
 
   // Organize tasks into columns
   const tasksByColumn = useMemo(() => {
-    const taskList: any[] = Array.isArray(apiTasks) ? apiTasks : (apiTasks as any)?.items ?? [];
-    const grouped: Record<string, TaskItem[]> = { backlog: [], todo: [], in_progress: [], in_review: [], done: [] };
+    const taskList: any[] = Array.isArray(apiTasks)
+      ? apiTasks
+      : ((apiTasks as any)?.items ?? []);
+    const grouped: Record<string, TaskItem[]> = {
+      backlog: [],
+      todo: [],
+      in_progress: [],
+      in_review: [],
+      done: [],
+    };
     taskList.forEach((t: any) => {
       const item: TaskItem = {
         id: t.id,
-        title: t.title ?? 'Untitled',
-        priority: t.priority ?? 'medium',
+        title: t.title ?? "Untitled",
+        priority: t.priority ?? "medium",
         tags: t.tags ?? [],
-        assignees: t.assignments?.map((a: any) => ({
-          name: a.user?.displayName ?? 'User',
-          avatarUrl: a.user?.avatarUrl ?? null,
-        })) ?? [],
+        assignees:
+          t.assignments?.map((a: any) => ({
+            name: a.user?.displayName ?? "User",
+            avatarUrl: a.user?.avatarUrl ?? null,
+          })) ?? [],
         dueDate: t.dueDate ?? null,
         commentCount: t.commentCount ?? 0,
+        communityId: t.communityId ?? communityId,
       };
-      const col = t.status ?? 'backlog';
+      // Apply priority filter
+      if (priorityFilter && item.priority !== priorityFilter) return;
+      const col = t.status ?? "backlog";
       if (grouped[col]) grouped[col].push(item);
       else grouped.backlog.push(item);
     });
     return grouped;
-  }, [apiTasks]);
+  }, [apiTasks, priorityFilter]);
 
   const [localTasks, setLocalTasks] = useState<Record<string, TaskItem[]> | null>(null);
   const tasks = localTasks ?? tasksByColumn;
 
-  // Sync local state when API data refreshes
+  // Sync local state when API data refreshes, but avoid resetting during optimistic mutation
   useEffect(() => {
-    setLocalTasks(null);
-  }, [apiTasks]);
+    if (!updateTaskMut.isPending) {
+      setLocalTasks(null);
+    }
+  }, [apiTasks, updateTaskMut.isPending]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
@@ -358,9 +388,10 @@ const KanbanPage: React.FC = () => {
         return { ...mergedTasks, [sourceCol]: source, [targetCol]: target };
       });
       // Persist status change to API
-      updateTaskMut.mutate({ taskId: activeId, data: { status: targetCol } });
+      const taskObj = [...mergedTasks[sourceCol], ...mergedTasks[targetCol]].find(t => t.id === activeId);
+      updateTaskMut.mutate({ taskId: activeId, taskCommunityId: taskObj?.communityId ?? communityId, data: { status: targetCol } });
     }
-  }, [findColumn, localTasks, tasksByColumn, updateTaskMut]);
+  }, [findColumn, localTasks, tasksByColumn, updateTaskMut, communityId]);
 
   const handleCreateTask = (values: any) => {
     createTaskMut.mutate({
@@ -375,51 +406,102 @@ const KanbanPage: React.FC = () => {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         style={{
-          display: 'flex', justifyContent: 'space-between',
-          alignItems: 'flex-start', marginBottom: 28,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 28,
         }}
       >
         <div>
-          <Title level={2} style={{
-            color: 'var(--c-text-bright, #F4F4F5)', margin: 0, fontFamily: "'Outfit', sans-serif",
-            fontWeight: 800, fontSize: 36, letterSpacing: -0.5,
-          }}>
-            <ThunderboltOutlined style={{ marginRight: 14, color: 'var(--c-warning)' }} /> Task Board
+          <Title
+            level={2}
+            style={{
+              color: "var(--c-text-bright, #F4F4F5)",
+              margin: 0,
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 800,
+              fontSize: 36,
+              letterSpacing: -0.5,
+            }}
+          >
+            <ThunderboltOutlined
+              style={{ marginRight: 14, color: "var(--c-warning)" }}
+            />{" "}
+            Task Board
           </Title>
-          <Text style={{ color: 'var(--c-text-muted, #A1A1AA)', fontSize: 15, display: 'block', marginTop: 6 }}>
-            {communityName} · {totalTasks} tasks · Drag cards to move them
-          </Text>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginTop: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <Select
+              placeholder="Select a community"
+              value={slug || 'personal'}
+              onChange={(value) => {
+                if (value === 'personal') navigate(`/dashboard/tasks`);
+                else navigate(`/dashboard/communities/${value}/tasks`);
+              }}
+              style={{ minWidth: 200 }}
+              options={[
+                { value: 'personal', label: 'My Personal Tasks' },
+                ...communityList.map((c: any) => ({
+                  value: c.slug,
+                  label: c.name,
+                }))
+              ]}
+            />
+            <Text
+              style={{ color: "var(--c-text-muted, #A1A1AA)", fontSize: 15 }}
+            >
+              {slug
+                ? `${communityName} · ${totalTasks} tasks`
+                : `Your Personal Tasks · ${totalTasks} tasks across communities`}
+            </Text>
+          </div>
         </div>
 
         <Space size={12}>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-            <Button
-              icon={<FilterOutlined />}
-              style={{
-                background: 'var(--c-glass-base, rgba(255,255,255,0.03))',
-                borderColor: 'var(--c-glass-border, rgba(255,255,255,0.06))',
-                color: 'var(--c-text-muted, #A1A1AA)', borderRadius: 14, height: 48, fontWeight: 600,
-              }}
-            >
-              Filter
-            </Button>
-          </motion.div>
+          <Select
+            allowClear
+            placeholder={
+              <>
+                <FilterOutlined /> Priority
+              </>
+            }
+            value={priorityFilter}
+            onChange={setPriorityFilter}
+            style={{ minWidth: 140 }}
+            options={[
+              { value: "low", label: "🟢 Low" },
+              { value: "medium", label: "🔵 Medium" },
+              { value: "high", label: "🟡 High" },
+              { value: "urgent", label: "🔴 Urgent" },
+            ]}
+          />
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsModalOpen(true)}
               style={{
-                background: 'var(--c-accent)',
-                border: 'none', fontWeight: 700, borderRadius: 14,
-                height: 48, padding: '0 24px', fontSize: 15,
-                boxShadow: '0 8px 24px rgba(124,106,239,0.3)',
+                background: "var(--c-accent)",
+                border: "none",
+                fontWeight: 700,
+                borderRadius: 14,
+                height: 48,
+                padding: "0 24px",
+                fontSize: 15,
+                boxShadow: "0 8px 24px rgba(124,106,239,0.3)",
               }}
             >
               New Task
@@ -430,84 +512,135 @@ const KanbanPage: React.FC = () => {
 
       {/* Board */}
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>
-      ) : !communityId ? (
-        <Empty description={<Text style={{ color: 'var(--c-text-dim)' }}>Select a community to view tasks</Text>} style={{ marginTop: 60 }} />
-      ) : (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div style={{
-          display: 'flex', gap: 16,
-          overflowX: 'auto', paddingBottom: 16,
-          minHeight: 'calc(100vh - 240px)',
-        }}>
-          {COLUMNS.map((col, colIdx) => (
-            <DroppableColumn
-              key={col.key}
-              col={col}
-              tasks={tasks[col.key] || []}
-              isOver={overColumn === col.key}
-              colIdx={colIdx}
-              onAddClick={() => setIsModalOpen(true)}
-            />
-          ))}
+        <div style={{ textAlign: "center", padding: 80 }}>
+          <Spin size="large" />
         </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              overflowX: "auto",
+              paddingBottom: 16,
+              minHeight: "calc(100vh - 240px)",
+            }}
+          >
+            {COLUMNS.map((col, colIdx) => (
+              <DroppableColumn
+                key={col.key}
+                col={col}
+                tasks={tasks[col.key] || []}
+                isOver={overColumn === col.key}
+                colIdx={colIdx}
+                onAddClick={() => setIsModalOpen(true)}
+              />
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeTask ? (
-            <div style={{ width: 300 }}>
-              <SortableTaskCard task={activeTask} isDraggingOverlay />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeTask ? (
+              <div style={{ width: 300 }}>
+                <SortableTaskCard task={activeTask} isDraggingOverlay />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Create Task Modal */}
       <Modal
-        title={<span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 20 }}>New Task</span>}
+        title={
+          <span
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 700,
+              fontSize: 20,
+            }}
+          >
+            New Task
+          </span>
+        }
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
       >
-        <Form form={form} layout="vertical" requiredMark={false} onFinish={handleCreateTask}>
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleCreateTask}
+        >
           <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-            <Input placeholder="What needs to be done?" size="large" style={{ borderRadius: 14, height: 48 }} />
+            <Input
+              placeholder="What needs to be done?"
+              size="large"
+              style={{ borderRadius: 14, height: 48 }}
+            />
           </Form.Item>
           <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Add details..." style={{ borderRadius: 14 }} />
+            <Input.TextArea
+              rows={3}
+              placeholder="Add details..."
+              style={{ borderRadius: 14 }}
+            />
           </Form.Item>
           <Form.Item name="tags" label="Tags">
-            <Input placeholder="ai, ml, docs (comma separated)" size="large" style={{ borderRadius: 14, height: 48 }} />
+            <Input
+              placeholder="ai, ml, docs (comma separated)"
+              size="large"
+              style={{ borderRadius: 14, height: 48 }}
+            />
           </Form.Item>
-          <Space style={{ width: '100%' }} size={12}>
-            <Form.Item name="priority" label="Priority" initialValue="medium" style={{ flex: 1 }}>
+          <Space style={{ width: "100%" }} size={12}>
+            <Form.Item
+              name="priority"
+              label="Priority"
+              initialValue="medium"
+              style={{ flex: 1 }}
+            >
               <Select
                 options={[
-                  { value: 'low', label: '🟢 Low' },
-                  { value: 'medium', label: '🔵 Medium' },
-                  { value: 'high', label: '🟡 High' },
-                  { value: 'urgent', label: '🔴 Urgent' },
+                  { value: "low", label: "🟢 Low" },
+                  { value: "medium", label: "🔵 Medium" },
+                  { value: "high", label: "🟡 High" },
+                  { value: "urgent", label: "🔴 Urgent" },
                 ]}
               />
             </Form.Item>
-            <Form.Item name="status" label="Column" initialValue="todo" style={{ flex: 1 }}>
-              <Select options={COLUMNS.map(c => ({ value: c.key, label: `${c.emoji} ${c.title}` }))} />
+            <Form.Item
+              name="status"
+              label="Column"
+              initialValue="todo"
+              style={{ flex: 1 }}
+            >
+              <Select
+                options={COLUMNS.map((c) => ({
+                  value: c.key,
+                  label: `${c.emoji} ${c.title}`,
+                }))}
+              />
             </Form.Item>
           </Space>
           <Form.Item>
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
               <Button
-                type="primary" htmlType="submit" block
+                type="primary"
+                htmlType="submit"
+                block
                 style={{
-                  background: 'var(--c-accent)',
-                  border: 'none', fontWeight: 700, borderRadius: 14, height: 52,
-                  boxShadow: '0 8px 24px rgba(124,106,239,0.3)',
+                  background: "var(--c-accent)",
+                  border: "none",
+                  fontWeight: 700,
+                  borderRadius: 14,
+                  height: 52,
+                  boxShadow: "0 8px 24px rgba(124,106,239,0.3)",
                 }}
               >
                 Create Task

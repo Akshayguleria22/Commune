@@ -23,6 +23,9 @@ export const tasksApi = {
   list: (communityId: string, params?: { status?: string; limit?: number; cursor?: string }) =>
     apiClient.get(`/communities/${communityId}/tasks`, { params }).then((r) => r.data.data ?? r.data),
 
+  listPersonal: () =>
+    apiClient.get('/tasks/me').then((r) => r.data.data ?? r.data),
+
   getById: (communityId: string, taskId: string) =>
     apiClient.get(`/communities/${communityId}/tasks/${taskId}`).then((r) => r.data.data ?? r.data),
 

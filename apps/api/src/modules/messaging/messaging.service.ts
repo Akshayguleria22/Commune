@@ -175,11 +175,11 @@ export class MessagingService {
   async getMessages(channelId: string, userId: string, limit = 50, before?: string): Promise<Message[]> {
     const qb = this.messageRepo.createQueryBuilder('m')
       .where('m.channel_id = :channelId', { channelId })
-      .orderBy('m.created_at', 'DESC')
+      .orderBy('m.createdAt', 'DESC')
       .take(limit);
 
     if (before) {
-      qb.andWhere('m.created_at < :before', { before });
+      qb.andWhere('m.createdAt < :before', { before });
     }
 
     const messages = await qb.getMany();

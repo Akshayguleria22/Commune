@@ -44,8 +44,12 @@ export class CollaborationController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update task' })
-  async update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
-    return this.collaborationService.updateTask(id, dto);
+  async update(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    return this.collaborationService.updateTask(id, userId, dto);
   }
 
   @Get(':id/comments')

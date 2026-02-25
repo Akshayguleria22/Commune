@@ -1,10 +1,21 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Typography, Row, Col, Card, Tag, Space, Avatar, Progress, Empty } from 'antd';
-import { CodeOutlined, TeamOutlined, CalendarOutlined, StarOutlined, TrophyOutlined, LinkOutlined } from '@ant-design/icons';
+import { useParams, useNavigate } from "react-router-dom";
+import { Typography, Row, Col, Card, Tag, Space, Avatar, Progress, Empty, Button, message as antMsg } from 'antd';
+import {
+  CodeOutlined,
+  TeamOutlined,
+  CalendarOutlined,
+  StarOutlined,
+  TrophyOutlined,
+  LinkOutlined,
+  CrownOutlined,
+  PlusOutlined,
+  FilePdfOutlined,
+} from "@ant-design/icons";
 import { motion } from 'framer-motion';
 import { ContributionHeatmap, StatCard, PortfolioSkeleton } from '../../../shared/components';
 import { useUserPortfolio, useMyPortfolio } from '../hooks/usePortfolio';
+import { useCommunities } from "../../community/hooks/useCommunities";
 import { useAuthStore } from '../../../stores/auth.store';
 
 const { Title, Text, Paragraph } = Typography;
@@ -14,11 +25,18 @@ const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 
 const PortfolioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const { user: authUser } = useAuthStore();
   const isMe = !username || username === authUser?.username;
 
   const { data: myPortfolio, isLoading: myLoading } = useMyPortfolio();
   const { data: userPortfolio, isLoading: userLoading } = useUserPortfolio(isMe ? '' : (username ?? ''));
+  const { data: communitiesData } = useCommunities();
+  const myCommunities: any[] = isMe
+    ? Array.isArray(communitiesData)
+      ? communitiesData
+      : ((communitiesData as any)?.items ?? [])
+    : [];
 
   const isLoading = isMe ? myLoading : userLoading;
   const portfolio: any = isMe ? myPortfolio : userPortfolio;
@@ -39,6 +57,13 @@ const PortfolioPage: React.FC = () => {
   const builder = portfolio?.builderScore ?? 0;
   const mentor = portfolio?.mentorScore ?? 0;
   const organizer = portfolio?.organizerScore ?? 0;
+
+  let builderRank = "Rookie Builder";
+  let rankColor = "var(--c-text-dim)";
+  let rankBg = "var(--c-bg-hover)";
+  if (builder >= 100) { builderRank = "Master Builder"; rankColor = "#fff"; rankBg = "var(--c-warning)"; }
+  else if (builder >= 50) { builderRank = "Pro Builder"; rankColor = "#fff"; rankBg = "var(--c-accent)"; }
+  else if (builder >= 10) { builderRank = "Active Builder"; rankColor = "var(--c-info)"; rankBg = "rgba(52,152,219,0.15)"; }
 
   return (
     <motion.div
@@ -171,20 +196,43 @@ const PortfolioPage: React.FC = () => {
         </div>
 
         <div style={{ flex: 1, minWidth: 200, marginTop: 50 }}>
-          <Space size={12} align="center">
-            <Title
-              level={1}
-              style={{
-                margin: 0,
-                color: "var(--c-text-bright)",
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 40,
-                fontWeight: 800,
-                letterSpacing: -0.5,
-              }}
-            >
-              {displayName}
-            </Title>
+          <Space size={12} align="center" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <Title
+                level={1}
+                style={{
+                  margin: 0,
+                  color: "var(--c-text-bright)",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 40,
+                  fontWeight: 800,
+                  letterSpacing: -0.5,
+                }}
+              >
+                {displayName}
+              </Title>
+              <Text
+                style={{
+                  color: "var(--c-text-muted)",
+                  fontSize: 16,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                @{user.username ?? username}
+              </Text>
+            </div>
+            {isMe && (
+              <Button
+                type="primary"
+                ghost
+                icon={<FilePdfOutlined />}
+                style={{ borderRadius: 12 }}
+                onClick={() => antMsg.info("Resume upload coming soon")}
+              >
+                Add Resume
+              </Button>
+            )}
           </Space>
           {headline && (
             <Text
@@ -199,17 +247,21 @@ const PortfolioPage: React.FC = () => {
               {headline}
             </Text>
           )}
-          <Text
-            style={{
-              color: "var(--c-text-muted)",
-              display: "block",
-              marginTop: 4,
-              fontSize: 14,
-            }}
-          >
-            @{user.username ?? username}
-            {user.location ? ` · ${user.location}` : ""}
-          </Text>
+          <Space size={8} style={{ marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <Text
+              style={{
+                color: "var(--c-text-muted)",
+                fontSize: 14,
+              }}
+            >
+              {user.location ? user.location : ""}
+            </Text>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--c-text-dim)" }} />
+            <Tag color={rankBg === "var(--c-bg-hover)" ? "default" : undefined} style={{ margin: 0, border: "none", background: rankBg, color: rankColor, fontWeight: 700, borderRadius: 12, padding: "2px 10px" }}>
+              <TrophyOutlined style={{ marginRight: 4 }} />
+              {builderRank}
+            </Tag>
+          </Space>
           {summary && (
             <Paragraph
               style={{
@@ -422,6 +474,19 @@ const PortfolioPage: React.FC = () => {
                   Skills
                 </span>
               }
+              extra={
+                isMe && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    style={{ color: 'var(--c-accent-soft)' }}
+                    onClick={() => antMsg.info("Skill management coming soon")}
+                  >
+                    Add Skill
+                  </Button>
+                )
+              }
               style={{
                 background: "var(--c-bg-surface)",
                 backdropFilter: "blur(20px)",
@@ -480,6 +545,100 @@ const PortfolioPage: React.FC = () => {
               )}
             </Card>
           </motion.div>
+
+          {/* Communities Section */}
+          {isMe && myCommunities.length > 0 && (
+            <motion.div variants={fadeUp} style={{ marginTop: 20 }}>
+              <Card
+                title={
+                  <span
+                    style={{
+                      color: "var(--c-text-bright)",
+                      fontWeight: 700,
+                      fontFamily: "'Outfit'",
+                    }}
+                  >
+                    <TeamOutlined
+                      style={{ color: "var(--c-accent-soft)", marginRight: 8 }}
+                    />
+                    My Communities
+                  </span>
+                }
+                style={{
+                  background: "var(--c-bg-surface)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid var(--c-glass-border)",
+                  borderRadius: 14,
+                }}
+                styles={{ body: { padding: "12px 16px" } }}
+              >
+                <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                  {myCommunities.map((c: any) => (
+                    <div
+                      key={c.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        transition: "background 0.2s",
+                        border: "1px solid transparent",
+                      }}
+                      onClick={() =>
+                        navigate(`/dashboard/communities/${c.slug}`)
+                      }
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "var(--c-glass-highlight)";
+                        e.currentTarget.style.borderColor =
+                          "var(--c-glass-border)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.borderColor = "transparent";
+                      }}
+                    >
+                      <Avatar
+                        size={32}
+                        style={{
+                          background: "var(--c-accent)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {c.name?.[0] ?? "C"}
+                      </Avatar>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Text
+                          style={{
+                            color: "var(--c-text-bright)",
+                            fontWeight: 600,
+                            fontSize: 13,
+                            display: "block",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {c.name}
+                        </Text>
+                      </div>
+                      {(c.role === "owner" || c.role === "Owner") && (
+                        <CrownOutlined
+                          style={{
+                            color: "var(--c-warning)",
+                            fontSize: 13,
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </Space>
+              </Card>
+            </motion.div>
+          )}
         </Col>
       </Row>
     </motion.div>
