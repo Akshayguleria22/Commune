@@ -93,4 +93,35 @@ export class MessagingController {
   ) {
     return this.messagingService.sendMessage(channelId, userId, content);
   }
+
+  // ═══ Community Channels ═══
+
+  @Get('community/:communityId/channel')
+  @ApiOperation({ summary: 'Get or create default community text channel' })
+  async getCommunityChannel(
+    @Param('communityId') communityId: string,
+  ) {
+    return this.messagingService.getOrCreateCommunityChannel(communityId);
+  }
+
+  @Get('community/channel/:channelId/messages')
+  @ApiOperation({ summary: 'Get messages in a community channel' })
+  async getCommunityMessages(
+    @Param('channelId') channelId: string,
+    @CurrentUser('id') userId: string,
+    @Query('limit') limit?: number,
+    @Query('before') before?: string,
+  ) {
+    return this.messagingService.getMessages(channelId, userId, limit || 50, before);
+  }
+
+  @Post('community/channel/:channelId/messages')
+  @ApiOperation({ summary: 'Send a message in a community channel' })
+  async sendCommunityMessage(
+    @Param('channelId') channelId: string,
+    @CurrentUser('id') userId: string,
+    @Body('content') content: string,
+  ) {
+    return this.messagingService.sendMessage(channelId, userId, content);
+  }
 }

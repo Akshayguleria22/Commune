@@ -13,7 +13,13 @@ export class InitialSchema1708627200000 implements MigrationInterface {
 
     // pgvector — may not be available in all environments
     try {
-      await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "vector"`);
+      await queryRunner.query(`
+        DO $$ BEGIN
+          CREATE EXTENSION IF NOT EXISTS "vector";
+        EXCEPTION WHEN OTHERS THEN
+          RAISE NOTICE 'pgvector extension not available';
+        END $$
+      `);
     } catch (e) {
       console.warn('⚠️  pgvector extension not available. Recommendation features will be limited.');
     }

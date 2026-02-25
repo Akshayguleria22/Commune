@@ -4,6 +4,7 @@ import {
 } from 'typeorm';
 import { Community } from './community.entity';
 import { Role } from './role.entity';
+import { User } from '../../auth/entities/user.entity';
 import { MembershipStatus } from '../../../shared/enums';
 
 @Entity('memberships')
@@ -14,6 +15,10 @@ export class Membership {
 
   @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
+
+  @ManyToOne(() => User, { eager: false })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'uuid', name: 'community_id' })
   communityId: string;

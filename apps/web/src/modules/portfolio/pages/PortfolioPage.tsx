@@ -1,6 +1,22 @@
-import React from 'react';
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Typography, Row, Col, Card, Tag, Space, Avatar, Progress, Empty, Button, message as antMsg } from 'antd';
+import {
+  Typography,
+  Row,
+  Col,
+  Card,
+  Tag,
+  Space,
+  Avatar,
+  Progress,
+  Empty,
+  Button,
+  message as antMsg,
+  Modal,
+  Input,
+  Slider,
+  Popconfirm,
+} from "antd";
 import {
   CodeOutlined,
   TeamOutlined,
@@ -11,17 +27,39 @@ import {
   CrownOutlined,
   PlusOutlined,
   FilePdfOutlined,
+  DeleteOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
-import { motion } from 'framer-motion';
-import { ContributionHeatmap, StatCard, PortfolioSkeleton } from '../../../shared/components';
-import { useUserPortfolio, useMyPortfolio } from '../hooks/usePortfolio';
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ContributionHeatmap,
+  StatCard,
+  PortfolioSkeleton,
+} from "../../../shared/components";
+import {
+  useUserPortfolio,
+  useMyPortfolio,
+  useAddSkill,
+  useRemoveSkill,
+  useUpdatePortfolio,
+} from "../hooks/usePortfolio";
 import { useCommunities } from "../../community/hooks/useCommunities";
-import { useAuthStore } from '../../../stores/auth.store';
+import { useAuthStore } from "../../../stores/auth.store";
 
 const { Title, Text, Paragraph } = Typography;
 
-const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
-const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } };
+const stagger = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+  },
+};
 
 const PortfolioPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -30,25 +68,83 @@ const PortfolioPage: React.FC = () => {
   const isMe = !username || username === authUser?.username;
 
   const { data: myPortfolio, isLoading: myLoading } = useMyPortfolio();
-  const { data: userPortfolio, isLoading: userLoading } = useUserPortfolio(isMe ? '' : (username ?? ''));
+  const { data: userPortfolio, isLoading: userLoading } = useUserPortfolio(
+    isMe ? "" : (username ?? ""),
+  );
   const { data: communitiesData } = useCommunities();
+  const addSkillMut = useAddSkill();
+  const removeSkillMut = useRemoveSkill();
+  const updatePortfolioMut = useUpdatePortfolio();
   const myCommunities: any[] = isMe
     ? Array.isArray(communitiesData)
-      ? communitiesData
-      : ((communitiesData as any)?.items ?? [])
+      ? communitiesData.filter((c: any) => c.role)
+      : ((communitiesData as any)?.items ?? []).filter((c: any) => c.role)
     : [];
 
   const isLoading = isMe ? myLoading : userLoading;
   const portfolio: any = isMe ? myPortfolio : userPortfolio;
 
+  // Skill modal state
+  const [skillModalOpen, setSkillModalOpen] = useState(false);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillLevel, setNewSkillLevel] = useState(3);
+
+  // Resume modal state
+  const [resumeModalOpen, setResumeModalOpen] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState("");
+
+  const handleAddSkill = async () => {
+    if (!newSkillName.trim()) {
+      antMsg.warning("Please enter a skill name");
+      return;
+    }
+    try {
+      await addSkillMut.mutateAsync({
+        name: newSkillName.trim(),
+        level: newSkillLevel,
+      });
+      antMsg.success(`Skill "${newSkillName}" added!`);
+      setNewSkillName("");
+      setNewSkillLevel(3);
+      setSkillModalOpen(false);
+    } catch {
+      antMsg.error("Failed to add skill");
+    }
+  };
+
+  const handleRemoveSkill = async (skillId: string, skillName: string) => {
+    try {
+      await removeSkillMut.mutateAsync(skillId);
+      antMsg.success(`Removed "${skillName}"`);
+    } catch {
+      antMsg.error("Failed to remove skill");
+    }
+  };
+
+  const handleSaveResume = async () => {
+    if (!resumeUrl.trim()) {
+      antMsg.warning("Please enter a resume URL");
+      return;
+    }
+    try {
+      await updatePortfolioMut.mutateAsync({
+        websiteUrl: resumeUrl.trim(),
+      } as any);
+      antMsg.success("Resume link saved!");
+      setResumeModalOpen(false);
+    } catch {
+      antMsg.error("Failed to save resume link");
+    }
+  };
+
   if (isLoading) return <PortfolioSkeleton />;
 
   // Extract data from portfolio or fallback to auth user
   const user = portfolio?.user ?? authUser ?? {};
-  const displayName = user.displayName ?? username ?? 'User';
-  const headline = portfolio?.headline ?? user.bio ?? '';
-  const summary = portfolio?.summary ?? '';
-  const website = portfolio?.websiteUrl ?? user.website ?? '';
+  const displayName = user.displayName ?? username ?? "User";
+  const headline = portfolio?.headline ?? user.bio ?? "";
+  const summary = portfolio?.summary ?? "";
+  const website = portfolio?.websiteUrl ?? user.website ?? "";
   const skills: any[] = portfolio?.skills ?? [];
   const entries: any[] = portfolio?.entries ?? [];
   const contribs: any[] = portfolio?.contributions ?? [];
@@ -61,9 +157,19 @@ const PortfolioPage: React.FC = () => {
   let builderRank = "Rookie Builder";
   let rankColor = "var(--c-text-dim)";
   let rankBg = "var(--c-bg-hover)";
-  if (builder >= 100) { builderRank = "Master Builder"; rankColor = "#fff"; rankBg = "var(--c-warning)"; }
-  else if (builder >= 50) { builderRank = "Pro Builder"; rankColor = "#fff"; rankBg = "var(--c-accent)"; }
-  else if (builder >= 10) { builderRank = "Active Builder"; rankColor = "var(--c-info)"; rankBg = "rgba(52,152,219,0.15)"; }
+  if (builder >= 100) {
+    builderRank = "Master Builder";
+    rankColor = "#fff";
+    rankBg = "var(--c-warning)";
+  } else if (builder >= 50) {
+    builderRank = "Pro Builder";
+    rankColor = "#fff";
+    rankBg = "var(--c-accent)";
+  } else if (builder >= 10) {
+    builderRank = "Active Builder";
+    rankColor = "var(--c-info)";
+    rankBg = "rgba(52,152,219,0.15)";
+  }
 
   return (
     <motion.div
@@ -196,7 +302,15 @@ const PortfolioPage: React.FC = () => {
         </div>
 
         <div style={{ flex: 1, minWidth: 200, marginTop: 50 }}>
-          <Space size={12} align="center" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Space
+            size={12}
+            align="center"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
               <Title
                 level={1}
@@ -228,9 +342,12 @@ const PortfolioPage: React.FC = () => {
                 ghost
                 icon={<FilePdfOutlined />}
                 style={{ borderRadius: 12 }}
-                onClick={() => antMsg.info("Resume upload coming soon")}
+                onClick={() => {
+                  setResumeUrl(website || "");
+                  setResumeModalOpen(true);
+                }}
               >
-                Add Resume
+                {website ? "Edit Resume" : "Add Resume"}
               </Button>
             )}
           </Space>
@@ -247,7 +364,10 @@ const PortfolioPage: React.FC = () => {
               {headline}
             </Text>
           )}
-          <Space size={8} style={{ marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <Space
+            size={8}
+            style={{ marginTop: 8, flexWrap: "wrap", alignItems: "center" }}
+          >
             <Text
               style={{
                 color: "var(--c-text-muted)",
@@ -256,8 +376,26 @@ const PortfolioPage: React.FC = () => {
             >
               {user.location ? user.location : ""}
             </Text>
-            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--c-text-dim)" }} />
-            <Tag color={rankBg === "var(--c-bg-hover)" ? "default" : undefined} style={{ margin: 0, border: "none", background: rankBg, color: rankColor, fontWeight: 700, borderRadius: 12, padding: "2px 10px" }}>
+            <div
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                background: "var(--c-text-dim)",
+              }}
+            />
+            <Tag
+              color={rankBg === "var(--c-bg-hover)" ? "default" : undefined}
+              style={{
+                margin: 0,
+                border: "none",
+                background: rankBg,
+                color: rankColor,
+                fontWeight: 700,
+                borderRadius: 12,
+                padding: "2px 10px",
+              }}
+            >
               <TrophyOutlined style={{ marginRight: 4 }} />
               {builderRank}
             </Tag>
@@ -480,8 +618,8 @@ const PortfolioPage: React.FC = () => {
                     type="text"
                     size="small"
                     icon={<PlusOutlined />}
-                    style={{ color: 'var(--c-accent-soft)' }}
-                    onClick={() => antMsg.info("Skill management coming soon")}
+                    style={{ color: "var(--c-accent-soft)" }}
+                    onClick={() => setSkillModalOpen(true)}
                   >
                     Add Skill
                   </Button>
@@ -504,43 +642,81 @@ const PortfolioPage: React.FC = () => {
                 />
               ) : (
                 <Space direction="vertical" size={18} style={{ width: "100%" }}>
-                  {skills.map((skill: any) => (
-                    <div key={skill.id ?? skill.name}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: 6,
-                        }}
+                  <AnimatePresence mode="popLayout">
+                    {skills.map((skill: any) => (
+                      <motion.div
+                        key={skill.id ?? skill.name}
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10, height: 0 }}
+                        transition={{ duration: 0.25 }}
                       >
-                        <Text
+                        <div
                           style={{
-                            color: "var(--c-text-base)",
-                            fontSize: 14,
-                            fontWeight: 600,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 6,
                           }}
                         >
-                          {skill.name}
-                        </Text>
-                        <Text
-                          style={{
-                            color: "var(--c-text-dim)",
-                            fontSize: 12,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {skill.level ?? 0}/5
-                        </Text>
-                      </div>
-                      <Progress
-                        percent={(skill.level ?? 0) * 20}
-                        showInfo={false}
-                        strokeColor="var(--c-accent)"
-                        trailColor="rgba(255,255,255,0.04)"
-                        size="small"
-                      />
-                    </div>
-                  ))}
+                          <Text
+                            style={{
+                              color: "var(--c-text-base)",
+                              fontSize: 14,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {skill.name}
+                          </Text>
+                          <Space size={8}>
+                            <Text
+                              style={{
+                                color: "var(--c-text-dim)",
+                                fontSize: 12,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {skill.level ?? 0}/5
+                            </Text>
+                            {isMe && (
+                              <Popconfirm
+                                title="Remove skill?"
+                                onConfirm={() =>
+                                  handleRemoveSkill(skill.id, skill.name)
+                                }
+                                okText="Yes"
+                                cancelText="No"
+                              >
+                                <DeleteOutlined
+                                  style={{
+                                    color: "var(--c-text-dim)",
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                    transition: "color 0.2s",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.color = "#ef4444")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.color =
+                                      "var(--c-text-dim)")
+                                  }
+                                />
+                              </Popconfirm>
+                            )}
+                          </Space>
+                        </div>
+                        <Progress
+                          percent={(skill.level ?? 0) * 20}
+                          showInfo={false}
+                          strokeColor="var(--c-accent)"
+                          trailColor="rgba(255,255,255,0.04)"
+                          size="small"
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </Space>
               )}
             </Card>
@@ -641,6 +817,206 @@ const PortfolioPage: React.FC = () => {
           )}
         </Col>
       </Row>
+
+      {/* Add Skill Modal */}
+      <Modal
+        title={
+          <span
+            style={{
+              fontFamily: "'Outfit'",
+              fontWeight: 700,
+              color: "var(--c-text-bright)",
+            }}
+          >
+            Add New Skill
+          </span>
+        }
+        open={skillModalOpen}
+        onCancel={() => {
+          setSkillModalOpen(false);
+          setNewSkillName("");
+          setNewSkillLevel(3);
+        }}
+        onOk={handleAddSkill}
+        confirmLoading={addSkillMut.isPending}
+        okText="Add Skill"
+        okButtonProps={{
+          style: {
+            background: "var(--c-accent)",
+            border: "none",
+            borderRadius: 10,
+          },
+        }}
+        cancelButtonProps={{
+          style: { borderRadius: 10, borderColor: "var(--c-glass-border)" },
+        }}
+        styles={{
+          content: {
+            background: "var(--c-bg-surface)",
+            border: "1px solid var(--c-glass-border)",
+            borderRadius: 16,
+          },
+          header: {
+            background: "var(--c-bg-surface)",
+            borderBottom: "1px solid var(--c-glass-border)",
+          },
+          footer: { borderTop: "1px solid var(--c-glass-border)" },
+        }}
+      >
+        <div style={{ padding: "16px 0" }}>
+          <Text
+            style={{
+              color: "var(--c-text-muted)",
+              fontSize: 13,
+              display: "block",
+              marginBottom: 8,
+            }}
+          >
+            Skill Name
+          </Text>
+          <Input
+            placeholder="e.g. React, Python, UI Design..."
+            value={newSkillName}
+            onChange={(e) => setNewSkillName(e.target.value)}
+            onPressEnter={handleAddSkill}
+            maxLength={50}
+            style={{
+              background: "var(--c-bg-deep, var(--c-bg-void))",
+              borderColor: "var(--c-glass-border)",
+              borderRadius: 10,
+              color: "var(--c-text-bright)",
+              height: 42,
+            }}
+          />
+          <div style={{ marginTop: 20 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "var(--c-text-muted)", fontSize: 13 }}>
+                Proficiency Level
+              </Text>
+              <Text
+                style={{
+                  color: "var(--c-accent-soft)",
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                {newSkillLevel}/5
+              </Text>
+            </div>
+            <Slider
+              min={1}
+              max={5}
+              value={newSkillLevel}
+              onChange={setNewSkillLevel}
+              marks={{ 1: "1", 2: "2", 3: "3", 4: "4", 5: "5" }}
+              styles={{ track: { background: "var(--c-accent)" } }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 4,
+              }}
+            >
+              <Text style={{ color: "var(--c-text-dim)", fontSize: 11 }}>
+                Beginner
+              </Text>
+              <Text style={{ color: "var(--c-text-dim)", fontSize: 11 }}>
+                Expert
+              </Text>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Resume Link Modal */}
+      <Modal
+        title={
+          <span
+            style={{
+              fontFamily: "'Outfit'",
+              fontWeight: 700,
+              color: "var(--c-text-bright)",
+            }}
+          >
+            <GlobalOutlined
+              style={{ marginRight: 8, color: "var(--c-accent-soft)" }}
+            />
+            Resume / Portfolio Link
+          </span>
+        }
+        open={resumeModalOpen}
+        onCancel={() => setResumeModalOpen(false)}
+        onOk={handleSaveResume}
+        confirmLoading={updatePortfolioMut.isPending}
+        okText="Save Link"
+        okButtonProps={{
+          style: {
+            background: "var(--c-accent)",
+            border: "none",
+            borderRadius: 10,
+          },
+        }}
+        cancelButtonProps={{
+          style: { borderRadius: 10, borderColor: "var(--c-glass-border)" },
+        }}
+        styles={{
+          content: {
+            background: "var(--c-bg-surface)",
+            border: "1px solid var(--c-glass-border)",
+            borderRadius: 16,
+          },
+          header: {
+            background: "var(--c-bg-surface)",
+            borderBottom: "1px solid var(--c-glass-border)",
+          },
+          footer: { borderTop: "1px solid var(--c-glass-border)" },
+        }}
+      >
+        <div style={{ padding: "16px 0" }}>
+          <Text
+            style={{
+              color: "var(--c-text-muted)",
+              fontSize: 13,
+              display: "block",
+              marginBottom: 8,
+            }}
+          >
+            Paste a link to your resume, portfolio site, or LinkedIn profile
+          </Text>
+          <Input
+            placeholder="https://drive.google.com/your-resume.pdf"
+            value={resumeUrl}
+            onChange={(e) => setResumeUrl(e.target.value)}
+            onPressEnter={handleSaveResume}
+            prefix={<LinkOutlined style={{ color: "var(--c-text-dim)" }} />}
+            style={{
+              background: "var(--c-bg-deep, var(--c-bg-void))",
+              borderColor: "var(--c-glass-border)",
+              borderRadius: 10,
+              color: "var(--c-text-bright)",
+              height: 42,
+            }}
+          />
+          <Text
+            style={{
+              color: "var(--c-text-dim)",
+              fontSize: 11,
+              display: "block",
+              marginTop: 8,
+            }}
+          >
+            Tip: Use Google Drive, Dropbox, or any public URL to host your
+            resume
+          </Text>
+        </div>
+      </Modal>
     </motion.div>
   );
 };

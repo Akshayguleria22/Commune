@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Portfolio, PortfolioEntry, UserSkill } from './entities';
 import { UpdatePortfolioDto, CreatePortfolioEntryDto, AddSkillDto } from './dto';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class PortfolioService {
@@ -15,6 +16,8 @@ export class PortfolioService {
     private readonly entryRepo: Repository<PortfolioEntry>,
     @InjectRepository(UserSkill)
     private readonly skillRepo: Repository<UserSkill>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async getByUserId(userId: string): Promise<Portfolio> {
@@ -92,5 +95,11 @@ export class PortfolioService {
       entries,
       skills,
     };
+  }
+
+  async getFullPortfolioByUsername(username: string) {
+    const user = await this.userRepo.findOne({ where: { username } });
+    if (!user) throw new NotFoundException('User not found');
+    return this.getFullPortfolio(user.id);
   }
 }

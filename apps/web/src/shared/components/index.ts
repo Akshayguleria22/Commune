@@ -10,4 +10,7 @@ export {
   EventListSkeleton,
   KanbanSkeleton,
   PortfolioSkeleton,
+  NotificationsSkeleton,
+  MessagingSkeleton,
+  CommunityDetailSkeleton,
 } from './Skeletons';

@@ -11,7 +11,6 @@ import {
   Col,
   Card,
   Input,
-  Spin,
   Empty,
   message as antMsg,
   Tooltip,
@@ -36,7 +35,11 @@ import {
 } from "@ant-design/icons";
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ContributionHeatmap, StatCard } from '../../../shared/components';
+import {
+  ContributionHeatmap,
+  StatCard,
+  CommunityDetailSkeleton,
+} from "../../../shared/components";
 import { useCommunity, useCommunityMembers, useCommunityContributions, useJoinCommunity, useLeaveCommunity, useUpdateCommunity } from '../hooks/useCommunities';
 import { useEvents } from '../../event/hooks/useEvents';
 import { EventCard } from '../../../shared/components';
@@ -50,6 +53,7 @@ const CommunityDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMsg, setChatMsg] = useState("");
   const { user: me } = useAuthStore();
   const queryClient = useQueryClient();
 
@@ -63,6 +67,28 @@ const CommunityDetailPage: React.FC = () => {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [form] = Form.useForm();
+
+  // Community chat channel
+  const { data: chatChannel } = useQuery({
+    queryKey: ["community-channel", community?.id],
+    queryFn: () => messagingApi.getCommunityChannel(community!.id),
+    enabled: !!community?.id && isChatOpen,
+  });
+  const { data: chatMessages = [], refetch: refetchChat } = useQuery({
+    queryKey: ["community-messages", chatChannel?.id],
+    queryFn: () => messagingApi.getCommunityMessages(chatChannel!.id),
+    enabled: !!chatChannel?.id,
+    refetchInterval: 5000,
+  });
+  const sendChatMut = useMutation({
+    mutationFn: (content: string) =>
+      messagingApi.sendCommunityMessage(chatChannel!.id, content),
+    onSuccess: () => {
+      setChatMsg("");
+      refetchChat();
+    },
+    onError: () => antMsg.error("Failed to send message"),
+  });
 
   // Friend request support
   const { data: friends = [] } = useQuery({
@@ -114,12 +140,7 @@ const CommunityDetailPage: React.FC = () => {
     ? eventsData
     : ((eventsData as any)?.items ?? []);
 
-  if (isLoading)
-    return (
-      <div style={{ textAlign: "center", padding: 80 }}>
-        <Spin size="large" />
-      </div>
-    );
+  if (isLoading) return <CommunityDetailSkeleton />;
   if (!community)
     return (
       <Empty description="Community not found" style={{ marginTop: 80 }} />
@@ -273,6 +294,7 @@ const CommunityDetailPage: React.FC = () => {
               <>
                 <Button
                   icon={<BellOutlined />}
+                  onClick={() => navigate("/dashboard/notifications")}
                   style={{
                     background: "var(--c-bg-hover)",
                     borderColor: "var(--c-glass-border)",
@@ -293,8 +315,8 @@ const CommunityDetailPage: React.FC = () => {
                         name: community.name,
                         description: community.description,
                         visibility: community.visibility,
-                        tags: community.tags?.join(', ') || '',
-                        coverUrl: community.coverUrl || '',
+                        tags: community.tags?.join(", ") || "",
+                        coverUrl: community.coverUrl || "",
                       });
                       setIsSettingsOpen(true);
                     }}
@@ -531,7 +553,7 @@ const CommunityDetailPage: React.FC = () => {
                       const userId = user.id ?? member.userId;
                       const displayName = user.displayName ?? "Unknown";
                       const username = user.username ?? "?";
-                      const role = member.role ?? "Member";
+                      const role = member.role?.name ?? member.role ?? "Member";
                       const isCurrentUser = userId === me?.id;
                       const isFriend = friendUserIds.has(userId);
                       const isPendingSent = pendingSentIds.has(userId);
@@ -738,27 +760,72 @@ const CommunityDetailPage: React.FC = () => {
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            gap: 16,
-            alignItems: "center",
-            justifyContent: "center",
+            gap: 8,
           }}
         >
-          <MessageOutlined
-            style={{ fontSize: 32, color: "var(--c-text-dim)" }}
-          />
-          <Text
-            style={{
-              color: "var(--c-text-dim)",
-              fontSize: 13,
-              textAlign: "center",
-            }}
-          >
-            Community chat — messages will appear here.
-            <br />
-            <span style={{ fontSize: 11, opacity: 0.7 }}>
-              Start a conversation!
-            </span>
-          </Text>
+          {Array.isArray(chatMessages) && chatMessages.length > 0 ? (
+            chatMessages.map((msg: any) => {
+              const isOwn = msg.authorId === me?.id;
+              return (
+                <div
+                  key={msg.id}
+                  style={{
+                    alignSelf: isOwn ? "flex-end" : "flex-start",
+                    maxWidth: "75%",
+                    padding: "8px 14px",
+                    borderRadius: isOwn
+                      ? "16px 16px 4px 16px"
+                      : "16px 16px 16px 4px",
+                    background: isOwn
+                      ? "var(--c-accent)"
+                      : "rgba(255,255,255,0.08)",
+                    color: isOwn ? "#fff" : "var(--c-text-bright)",
+                    fontSize: 13,
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {msg.content}
+                  <div
+                    style={{
+                      fontSize: 10,
+                      opacity: 0.6,
+                      marginTop: 4,
+                      textAlign: "right",
+                    }}
+                  >
+                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                gap: 12,
+              }}
+            >
+              <MessageOutlined
+                style={{ fontSize: 32, color: "var(--c-text-dim)" }}
+              />
+              <Text
+                style={{
+                  color: "var(--c-text-dim)",
+                  fontSize: 13,
+                  textAlign: "center",
+                }}
+              >
+                No messages yet. Start the conversation!
+              </Text>
+            </div>
+          )}
         </div>
         <div
           style={{
@@ -769,11 +836,22 @@ const CommunityDetailPage: React.FC = () => {
         >
           <Input
             placeholder="Type a message..."
+            value={chatMsg}
+            onChange={(e) => setChatMsg(e.target.value)}
+            onPressEnter={() => {
+              if (chatMsg.trim() && chatChannel?.id)
+                sendChatMut.mutate(chatMsg.trim());
+            }}
             suffix={
               <Button
                 type="primary"
                 shape="circle"
                 icon={<SendOutlined style={{ fontSize: 13 }} />}
+                loading={sendChatMut.isPending}
+                onClick={() => {
+                  if (chatMsg.trim() && chatChannel?.id)
+                    sendChatMut.mutate(chatMsg.trim());
+                }}
                 style={{
                   background: "var(--c-accent)",
                   border: "none",
@@ -835,17 +913,23 @@ const CommunityDetailPage: React.FC = () => {
           layout="vertical"
           onFinish={(values) => {
             const formattedTags = values.tags
-              ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+              ? values.tags
+                  .split(",")
+                  .map((t: string) => t.trim())
+                  .filter(Boolean)
               : [];
-            updateMut.mutate({
-              id: community.id,
-              data: {
-                ...values,
-                tags: formattedTags,
+            updateMut.mutate(
+              {
+                id: community.id,
+                data: {
+                  ...values,
+                  tags: formattedTags,
+                },
               },
-            }, {
-              onSuccess: () => setIsSettingsOpen(false)
-            });
+              {
+                onSuccess: () => setIsSettingsOpen(false),
+              },
+            );
           }}
         >
           <Form.Item label="Name" name="name" rules={[{ required: true }]}>
@@ -867,14 +951,18 @@ const CommunityDetailPage: React.FC = () => {
           <Form.Item label="Cover URL" name="coverUrl">
             <Input />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={updateMut.isPending} block>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={updateMut.isPending}
+            block
+          >
             Save Changes
           </Button>
         </Form>
       </Modal>
-
     </div>
   );
-};
+};;
 
 export default CommunityDetailPage;

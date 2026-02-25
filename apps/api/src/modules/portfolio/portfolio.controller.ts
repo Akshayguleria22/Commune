@@ -64,9 +64,9 @@ export class PortfolioController {
     return this.portfolioService.removeSkill(userId, skillId);
   }
 
-  @Get('user/:userId')
+  @Get('user/:username')
   @ApiOperation({ summary: 'Get a user portfolio (public)' })
-  async getUserPortfolio(@Param('userId') userId: string) {
-    return this.portfolioService.getFullPortfolio(userId);
+  async getUserPortfolio(@Param('username') username: string) {
+    return this.portfolioService.getFullPortfolioByUsername(username);
   }
 }

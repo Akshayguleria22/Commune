@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Button, Empty, Spin } from 'antd';
+import { Typography, Button, Empty } from "antd";
 import {
   BellOutlined,
   CheckOutlined,
@@ -10,6 +10,7 @@ import {
   ProjectOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
+import { NotificationsSkeleton } from "../../../shared/components";
 import { useNotifications, useMarkAsRead, useMarkAllRead, useUnreadCount } from '../../../shared/hooks/useNotifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -40,15 +41,15 @@ const NotificationsPage: React.FC = () => {
     : (notifications as any)?.items ?? [];
 
   return (
-    <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ position: "relative", maxWidth: 720, margin: "0 auto" }}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 32,
         }}
       >
@@ -56,7 +57,7 @@ const NotificationsPage: React.FC = () => {
           <Title
             level={2}
             style={{
-              color: 'var(--c-text-bright)',
+              color: "var(--c-text-bright)",
               margin: 0,
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 800,
@@ -64,11 +65,20 @@ const NotificationsPage: React.FC = () => {
               letterSpacing: -0.5,
             }}
           >
-            <BellOutlined style={{ marginRight: 14, color: 'var(--c-accent)' }} />
+            <BellOutlined
+              style={{ marginRight: 14, color: "var(--c-accent)" }}
+            />
             Notifications
           </Title>
-          <Text style={{ color: 'var(--c-text-muted)', fontSize: 15, display: 'block', marginTop: 6 }}>
-            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+          <Text
+            style={{
+              color: "var(--c-text-muted)",
+              fontSize: 15,
+              display: "block",
+              marginTop: 6,
+            }}
+          >
+            {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
           </Text>
         </div>
 
@@ -78,9 +88,9 @@ const NotificationsPage: React.FC = () => {
             onClick={() => markAllRead.mutate()}
             loading={markAllRead.isPending}
             style={{
-              background: 'var(--c-glass-highlight)',
-              borderColor: 'var(--c-glass-border)',
-              color: 'var(--c-text-muted)',
+              background: "var(--c-glass-highlight)",
+              borderColor: "var(--c-glass-border)",
+              color: "var(--c-text-muted)",
               borderRadius: 12,
               height: 40,
               fontWeight: 600,
@@ -93,15 +103,18 @@ const NotificationsPage: React.FC = () => {
 
       {/* Notifications List */}
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 80 }}>
-          <Spin size="large" />
-        </div>
+        <NotificationsSkeleton />
       ) : notifList.length === 0 ? (
         <Empty
-          image={<BellOutlined style={{ fontSize: 48, color: 'var(--c-text-dim)' }} />}
+          image={
+            <BellOutlined
+              style={{ fontSize: 48, color: "var(--c-text-dim)" }}
+            />
+          }
           description={
-            <Text style={{ color: 'var(--c-text-dim)' }}>
-              No notifications yet. Activity from your communities will show up here.
+            <Text style={{ color: "var(--c-text-dim)" }}>
+              No notifications yet. Activity from your communities will show up
+              here.
             </Text>
           }
           style={{ marginTop: 80 }}
@@ -110,11 +123,13 @@ const NotificationsPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+          style={{ display: "flex", flexDirection: "column", gap: 8 }}
         >
           {notifList.map((notif: any, idx: number) => {
             const isRead = notif.readAt || notif.isRead;
-            const icon = NOTIF_ICON_MAP[notif.type] ?? <BellOutlined style={{ color: 'var(--c-text-dim)' }} />;
+            const icon = NOTIF_ICON_MAP[notif.type] ?? (
+              <BellOutlined style={{ color: "var(--c-text-dim)" }} />
+            );
 
             return (
               <motion.div
@@ -123,24 +138,28 @@ const NotificationsPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.03 }}
                 style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
+                  display: "flex",
+                  alignItems: "flex-start",
                   gap: 14,
-                  padding: '14px 18px',
+                  padding: "14px 18px",
                   borderRadius: 14,
-                  background: isRead ? 'transparent' : 'var(--c-glass-highlight)',
-                  border: `1px solid ${isRead ? 'var(--c-glass-border)' : 'rgba(124,106,239,0.15)'}`,
-                  cursor: isRead ? 'default' : 'pointer',
-                  transition: 'all 0.2s',
+                  background: isRead
+                    ? "transparent"
+                    : "var(--c-glass-highlight)",
+                  border: `1px solid ${isRead ? "var(--c-glass-border)" : "rgba(124,106,239,0.15)"}`,
+                  cursor: isRead ? "default" : "pointer",
+                  transition: "all 0.2s",
                 }}
                 onClick={() => {
                   if (!isRead && notif.id) markRead.mutate(notif.id);
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--c-glass-highlight)';
+                  e.currentTarget.style.background = "var(--c-glass-highlight)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = isRead ? 'transparent' : 'var(--c-glass-highlight)';
+                  e.currentTarget.style.background = isRead
+                    ? "transparent"
+                    : "var(--c-glass-highlight)";
                 }}
               >
                 {/* Icon */}
@@ -149,11 +168,11 @@ const NotificationsPage: React.FC = () => {
                     width: 38,
                     height: 38,
                     borderRadius: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--c-bg-surface)',
-                    border: '1px solid var(--c-glass-border)',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "var(--c-bg-surface)",
+                    border: "1px solid var(--c-glass-border)",
                     fontSize: 16,
                     flexShrink: 0,
                   }}
@@ -165,29 +184,38 @@ const NotificationsPage: React.FC = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Text
                     style={{
-                      color: isRead ? 'var(--c-text-muted)' : 'var(--c-text-bright)',
+                      color: isRead
+                        ? "var(--c-text-muted)"
+                        : "var(--c-text-bright)",
                       fontWeight: isRead ? 400 : 600,
-                      display: 'block',
+                      display: "block",
                       fontSize: 14,
                       lineHeight: 1.5,
                     }}
                   >
-                    {notif.title ?? notif.message ?? 'Notification'}
+                    {notif.title ?? notif.message ?? "Notification"}
                   </Text>
                   {notif.body && (
                     <Text
                       style={{
-                        color: 'var(--c-text-dim)',
+                        color: "var(--c-text-dim)",
                         fontSize: 12,
-                        display: 'block',
+                        display: "block",
                         marginTop: 2,
                       }}
                     >
                       {notif.body}
                     </Text>
                   )}
-                  <Text style={{ color: 'var(--c-text-ghost)', fontSize: 11, marginTop: 4, display: 'block' }}>
-                    {notif.createdAt ? dayjs(notif.createdAt).fromNow() : ''}
+                  <Text
+                    style={{
+                      color: "var(--c-text-ghost)",
+                      fontSize: 11,
+                      marginTop: 4,
+                      display: "block",
+                    }}
+                  >
+                    {notif.createdAt ? dayjs(notif.createdAt).fromNow() : ""}
                   </Text>
                 </div>
 
@@ -197,11 +225,11 @@ const NotificationsPage: React.FC = () => {
                     style={{
                       width: 8,
                       height: 8,
-                      borderRadius: '50%',
-                      background: 'var(--c-accent)',
+                      borderRadius: "50%",
+                      background: "var(--c-accent)",
                       flexShrink: 0,
                       marginTop: 6,
-                      boxShadow: '0 0 8px rgba(124,106,239,0.4)',
+                      boxShadow: "0 0 8px rgba(124,106,239,0.4)",
                     }}
                   />
                 )}

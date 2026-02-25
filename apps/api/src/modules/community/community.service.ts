@@ -245,9 +245,9 @@ export class CommunityService {
       .select('c.contributed_at', 'date')
       .addSelect('SUM(c.weight)', 'intensity')
       .where('c.community_id = :communityId', { communityId })
-      .andWhere("c.contributed_at >= CURRENT_DATE - INTERVAL ':days days'", { days })
+      .andWhere("c.contributed_at >= CURRENT_DATE - CAST(:days AS INTEGER) * INTERVAL '1 day'", { days })
       .groupBy('c.contributed_at')
-      .orderBy('c.contributedAt', 'ASC');
+      .orderBy('c.contributed_at', 'ASC');
 
     if (userId) {
       qb.andWhere('c.user_id = :userId', { userId });

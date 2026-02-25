@@ -29,4 +29,14 @@ export const messagingApi = {
 
   sendMessage: (channelId: string, content: string) =>
     apiClient.post(`/messaging/dm/${channelId}/messages`, { content }).then((r) => r.data.data ?? r.data),
+
+  // Community Channels
+  getCommunityChannel: (communityId: string) =>
+    apiClient.get(`/messaging/community/${communityId}/channel`).then((r) => r.data.data ?? r.data),
+
+  getCommunityMessages: (channelId: string, params?: { limit?: number; before?: string }) =>
+    apiClient.get(`/messaging/community/channel/${channelId}/messages`, { params }).then((r) => r.data.data ?? r.data),
+
+  sendCommunityMessage: (channelId: string, content: string) =>
+    apiClient.post(`/messaging/community/channel/${channelId}/messages`, { content }).then((r) => r.data.data ?? r.data),
 };

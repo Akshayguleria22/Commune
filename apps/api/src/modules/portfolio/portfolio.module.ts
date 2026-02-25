@@ -6,9 +6,10 @@ import { PortfolioService } from './portfolio.service';
 import { PortfolioListener } from './portfolio.listener';
 import { Task, TaskAssignment } from '../collaboration/entities/task.entity';
 import { Community } from '../community/entities/community.entity';
+import { User } from '../auth/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Portfolio, PortfolioEntry, UserSkill, Task, TaskAssignment, Community])],
+  imports: [TypeOrmModule.forFeature([Portfolio, PortfolioEntry, UserSkill, Task, TaskAssignment, Community, User])],
   controllers: [PortfolioController],
   providers: [PortfolioService, PortfolioListener],
   exports: [PortfolioService],

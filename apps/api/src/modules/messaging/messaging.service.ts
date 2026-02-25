@@ -79,8 +79,11 @@ export class MessagingService {
 
   async getPendingRequests(userId: string): Promise<Friendship[]> {
     return this.friendshipRepo.find({
-      where: { addresseeId: userId, status: FriendshipStatus.PENDING },
-      relations: ['requester'],
+      where: [
+        { addresseeId: userId, status: FriendshipStatus.PENDING },
+        { requesterId: userId, status: FriendshipStatus.PENDING },
+      ],
+      relations: ['requester', 'addressee'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -190,5 +193,26 @@ export class MessagingService {
     const message = this.messageRepo.create({ channelId, authorId, content });
     await this.messageRepo.save(message);
     return message;
+  }
+
+  // ═══ Community Channels ═══
+
+  async getOrCreateCommunityChannel(communityId: string): Promise<Channel> {
+    let channel = await this.channelRepo.findOne({
+      where: { communityId, type: ChannelType.TEXT },
+      order: { createdAt: 'ASC' },
+    });
+
+    if (!channel) {
+      channel = this.channelRepo.create({
+        communityId,
+        name: 'general',
+        type: ChannelType.TEXT,
+      });
+      await this.channelRepo.save(channel);
+      this.logger.log(`Created default channel for community ${communityId}`);
+    }
+
+    return channel;
   }
 }

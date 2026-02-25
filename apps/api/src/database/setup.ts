@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { dataSourceOptions } from './data-source';
 import { InitialSchema1708627200000 } from './migrations/1708627200000-InitialSchema';
 import { AddIndexes1708627300000 } from './migrations/1708627300000-AddIndexes';
+import { AddFriendshipsAndFixChannels1708627400000 } from './migrations/1708627400000-AddFriendshipsAndFixChannels';
 
 /**
  * Sets up the database: runs migrations (or creates tables) and seeds data.
@@ -37,7 +38,11 @@ async function setup() {
 
     const migration2 = new AddIndexes1708627300000();
     await migration2.up(queryRunner);
-    console.log('✅ AddIndexes migration complete.\n');
+    console.log('✅ AddIndexes migration complete.');
+
+    const migration3 = new AddFriendshipsAndFixChannels1708627400000();
+    await migration3.up(queryRunner);
+    console.log('✅ AddFriendshipsAndFixChannels migration complete.\n');
   } catch (e: any) {
     console.error('❌ Migration failed:', e.message);
     await dataSource.destroy();

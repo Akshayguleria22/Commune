@@ -25,7 +25,7 @@ export class User {
   @Column({ type: 'varchar', length: 100, name: 'display_name' })
   displayName: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'password_hash' })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'password_hash', select: false })
   passwordHash: string | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true, name: 'avatar_url' })

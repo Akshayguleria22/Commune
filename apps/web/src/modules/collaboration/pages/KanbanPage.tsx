@@ -1,10 +1,24 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { Typography, Button, Tag, Space, Avatar, Modal, Form, Input, Select, Tooltip, Badge, Spin, message } from 'antd';
+import {
+  Typography,
+  Button,
+  Tag,
+  Space,
+  Avatar,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Tooltip,
+  Badge,
+  message,
+} from "antd";
 import {
   PlusOutlined, FilterOutlined, ClockCircleOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
+import { KanbanSkeleton } from "../../../shared/components";
 import {
   DndContext, closestCorners, DragOverlay,
   PointerSensor, useSensor, useSensors, useDroppable,
@@ -446,18 +460,18 @@ const KanbanPage: React.FC = () => {
           >
             <Select
               placeholder="Select a community"
-              value={slug || 'personal'}
+              value={slug || "personal"}
               onChange={(value) => {
-                if (value === 'personal') navigate(`/dashboard/tasks`);
+                if (value === "personal") navigate(`/dashboard/tasks`);
                 else navigate(`/dashboard/communities/${value}/tasks`);
               }}
               style={{ minWidth: 200 }}
               options={[
-                { value: 'personal', label: 'My Personal Tasks' },
+                { value: "personal", label: "My Personal Tasks" },
                 ...communityList.map((c: any) => ({
                   value: c.slug,
                   label: c.name,
-                }))
+                })),
               ]}
             />
             <Text
@@ -512,9 +526,7 @@ const KanbanPage: React.FC = () => {
 
       {/* Board */}
       {isLoading ? (
-        <div style={{ textAlign: "center", padding: 80 }}>
-          <Spin size="large" />
-        </div>
+        <KanbanSkeleton />
       ) : (
         <DndContext
           sensors={sensors}

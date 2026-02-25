@@ -525,3 +525,50 @@ textarea.ant-input:focus {
 [data-theme='light'] .ant-divider {
   border-color: rgba(0, 0, 0, 0.06) !important;
 }
+
+/* ═══ SMOOTH TRANSITIONS ═══ */
+/* Global card transitions */
+.ant-card {
+  transition: border-color var(--dur-normal) var(--ease-out),
+              box-shadow var(--dur-normal) var(--ease-out),
+              transform var(--dur-normal) var(--ease-out) !important;
+}
+
+/* Button transitions */
+.ant-btn {
+  transition: all var(--dur-fast) var(--ease-out) !important;
+}
+
+/* Tag transitions */
+.ant-tag {
+  transition: opacity var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out) !important;
+}
+
+/* Avatar hover effect */
+.ant-avatar {
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out) !important;
+}
+
+/* Tabs transition */
+.ant-tabs-ink-bar {
+  transition: left var(--dur-normal) var(--ease-out),
+              width var(--dur-normal) var(--ease-out) !important;
+}
+
+/* Modal entrance */
+.ant-modal {
+  animation-duration: 0.3s !important;
+}
+
+/* Skeleton pulse — smoother */
+.ant-skeleton-content .ant-skeleton-title,
+.ant-skeleton-content .ant-skeleton-paragraph > li {
+  border-radius: 6px !important;
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity var(--dur-slow) var(--ease-out);
+}

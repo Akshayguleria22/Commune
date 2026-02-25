@@ -427,9 +427,10 @@ const AppLayout: React.FC = () => {
         >
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 12, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             style={{ flex: 1, display: "flex", flexDirection: "column" }}
           >
             <Outlet />
@@ -550,29 +551,91 @@ const AppLayout: React.FC = () => {
         <div style={{ maxHeight: 380, overflowY: "auto", padding: "4px 0" }}>
           {search.query.length < 2 ? (
             <div style={{ padding: "16px" }}>
-              <Text style={{ color: "var(--c-text-muted)", fontSize: 12, fontWeight: 600, letterSpacing: 1, marginBottom: 8, display: "block" }}>
+              <Text
+                style={{
+                  color: "var(--c-text-muted)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: 1,
+                  marginBottom: 8,
+                  display: "block",
+                }}
+              >
                 QUICK ACTIONS
               </Text>
               <List
                 dataSource={[
-                  { icon: <PlusOutlined />, title: "Create Community", action: () => { search.close(); navigate("/dashboard/communities"); } },
-                  { icon: <ProjectOutlined />, title: "New Task", action: () => { search.close(); navigate("/dashboard/tasks"); } },
-                  { icon: <CalendarOutlined />, title: "New Event", action: () => { search.close(); navigate("/dashboard/events"); } },
-                  { icon: <HomeOutlined />, title: "Go to Command Center", action: () => { search.close(); navigate("/dashboard"); } },
-                  { icon: <CompassOutlined />, title: "Discover", action: () => { search.close(); navigate("/dashboard/discover"); } },
+                  {
+                    icon: <PlusOutlined />,
+                    title: "Create Community",
+                    action: () => {
+                      search.close();
+                      navigate("/dashboard/communities");
+                    },
+                  },
+                  {
+                    icon: <ProjectOutlined />,
+                    title: "New Task",
+                    action: () => {
+                      search.close();
+                      navigate("/dashboard/tasks");
+                    },
+                  },
+                  {
+                    icon: <CalendarOutlined />,
+                    title: "New Event",
+                    action: () => {
+                      search.close();
+                      navigate("/dashboard/events");
+                    },
+                  },
+                  {
+                    icon: <HomeOutlined />,
+                    title: "Go to Command Center",
+                    action: () => {
+                      search.close();
+                      navigate("/dashboard");
+                    },
+                  },
+                  {
+                    icon: <CompassOutlined />,
+                    title: "Discover",
+                    action: () => {
+                      search.close();
+                      navigate("/dashboard/discover");
+                    },
+                  },
                 ]}
                 renderItem={(item: any) => (
                   <List.Item
-                    style={{ padding: "10px 16px", cursor: "pointer", borderBottom: 0, borderRadius: 8 }}
+                    style={{
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      borderBottom: 0,
+                      borderRadius: 8,
+                    }}
                     onClick={item.action}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--c-accent-muted)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background =
+                        "var(--c-accent-muted)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
                   >
                     <Space size={12}>
-                      <div style={{ color: "var(--c-text-dim)", fontSize: 16 }}>{item.icon}</div>
-                      <Text style={{ color: "var(--c-text-bright)", fontSize: 14 }}>{item.title}</Text>
+                      <div style={{ color: "var(--c-text-dim)", fontSize: 16 }}>
+                        {item.icon}
+                      </div>
+                      <Text
+                        style={{ color: "var(--c-text-bright)", fontSize: 14 }}
+                      >
+                        {item.title}
+                      </Text>
                     </Space>
-                    <Text style={{ color: "var(--c-text-dim)", fontSize: 12 }}>Jump to</Text>
+                    <Text style={{ color: "var(--c-text-dim)", fontSize: 12 }}>
+                      Jump to
+                    </Text>
                   </List.Item>
                 )}
               />

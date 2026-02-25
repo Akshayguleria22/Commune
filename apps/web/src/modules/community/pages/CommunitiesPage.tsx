@@ -14,7 +14,7 @@ const fadeUp = { hidden: { opacity: 0, y: 20, scale: 0.97 }, visible: { opacity:
 const CommunitiesPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'mine'>('all');
+  const [filter, setFilter] = useState<"all" | "mine">("mine");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 

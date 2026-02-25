@@ -1,6 +1,101 @@
 import React from 'react';
 import { Skeleton, Card, Row, Col, Space } from 'antd';
 
+/** Skeleton for notifications page */
+export const NotificationsSkeleton: React.FC = () => (
+  <div style={{ maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
+      <Skeleton active paragraph={{ rows: 1, width: '40%' }} title={{ width: '50%' }} />
+      <Skeleton.Button active shape="round" style={{ width: 120 }} />
+    </div>
+    {Array.from({ length: 6 }).map((_, i) => (
+      <Card key={i} style={{
+        background: 'var(--c-bg-surface)', border: '1px solid var(--c-glass-border)',
+        borderRadius: 14, marginBottom: 8,
+      }} styles={{ body: { padding: '16px 20px' } }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <Skeleton.Avatar active size={40} />
+          <div style={{ flex: 1 }}>
+            <Skeleton active paragraph={{ rows: 1, width: '80%' }} title={{ width: '60%' }} />
+          </div>
+          <Skeleton.Button active size="small" shape="round" style={{ width: 60 }} />
+        </div>
+      </Card>
+    ))}
+  </div>
+);
+
+/** Skeleton for messaging page */
+export const MessagingSkeleton: React.FC = () => (
+  <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 140px)' }}>
+    <div style={{
+      background: 'var(--c-bg-surface)', border: '1px solid var(--c-glass-border)',
+      borderRadius: 16, width: 340, padding: 20,
+    }}>
+      <Skeleton active paragraph={{ rows: 0 }} title={{ width: '60%' }} style={{ marginBottom: 16 }} />
+      <Skeleton.Input active style={{ width: '100%', borderRadius: 10, marginBottom: 16 }} />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', alignItems: 'center' }}>
+          <Skeleton.Avatar active size={40} />
+          <div style={{ flex: 1 }}>
+            <Skeleton active paragraph={{ rows: 1, width: '90%' }} title={{ width: '50%' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+    <div style={{
+      background: 'var(--c-bg-surface)', border: '1px solid var(--c-glass-border)',
+      borderRadius: 16, flex: 1, padding: 24, display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--c-glass-border)', paddingBottom: 16 }}>
+        <Skeleton.Avatar active size={40} />
+        <Skeleton active paragraph={{ rows: 0 }} title={{ width: '30%' }} />
+      </div>
+      <div style={{ flex: 1 }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 16, justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
+            {i % 2 === 0 && <Skeleton.Avatar active size={28} />}
+            <Skeleton.Button active shape="round" style={{ width: 180 + (i * 30), height: 36, borderRadius: 12 }} />
+          </div>
+        ))}
+      </div>
+      <Skeleton.Input active style={{ width: '100%', borderRadius: 12, height: 44 }} />
+    </div>
+  </div>
+);
+
+/** Skeleton for community detail page */
+export const CommunityDetailSkeleton: React.FC = () => (
+  <div>
+    <Skeleton.Image active style={{ width: '100%', height: 280, borderRadius: 16 }} />
+    <div style={{ display: 'flex', gap: 24, marginTop: -60, padding: '0 24px', position: 'relative', zIndex: 10 }}>
+      <Skeleton.Avatar active size={120} shape="square" style={{ borderRadius: 16 }} />
+      <div style={{ flex: 1, paddingTop: 30 }}>
+        <Skeleton active paragraph={{ rows: 2 }} title={{ width: '40%' }} />
+      </div>
+    </div>
+    <div style={{ marginTop: 32 }}>
+      <Skeleton.Button active shape="round" style={{ width: 100, marginRight: 12 }} />
+      <Skeleton.Button active shape="round" style={{ width: 80, marginRight: 12 }} />
+      <Skeleton.Button active shape="round" style={{ width: 90 }} />
+    </div>
+    <Row gutter={[20, 20]} style={{ marginTop: 24 }}>
+      <Col xs={24} lg={16}>
+        <Card style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-glass-border)', borderRadius: 14 }} styles={{ body: { padding: 20 } }}>
+          <Skeleton active paragraph={{ rows: 4 }} />
+        </Card>
+      </Col>
+      <Col xs={24} lg={8}>
+        <Card style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-glass-border)', borderRadius: 14 }}>
+          <Skeleton active avatar paragraph={{ rows: 1 }} />
+          <Skeleton active avatar paragraph={{ rows: 1 }} style={{ marginTop: 12 }} />
+          <Skeleton active avatar paragraph={{ rows: 1 }} style={{ marginTop: 12 }} />
+        </Card>
+      </Col>
+    </Row>
+  </div>
+);
+
 /** Skeleton for a single community card */
 export const CommunityCardSkeleton: React.FC = () => (
   <Card
