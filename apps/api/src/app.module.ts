@@ -32,8 +32,10 @@ import { appConfig } from './config/app.config';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('database.url');
-        const dbEndpoint = configService.get<string>('database.endpoint');
-        const dbServername = configService.get<string>('database.servername');
+        // DB_ENDPOINT and DB_SERVERNAME are only needed for IP-based DNS bypass (local dev).
+        // When DATABASE_URL is set, the hostname already handles endpoint routing via SNI.
+        const dbEndpoint = databaseUrl ? undefined : configService.get<string>('database.endpoint');
+        const dbServername = databaseUrl ? undefined : configService.get<string>('database.servername');
         const sslEnabled = process.env.DB_SSL === 'true' || configService.get<string>('NODE_ENV') === 'production';
         return {
           type: 'postgres',
