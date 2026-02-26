@@ -15,8 +15,12 @@ import {
   message,
 } from "antd";
 import {
-  PlusOutlined, FilterOutlined, ClockCircleOutlined, ThunderboltOutlined,
-} from '@ant-design/icons';
+  PlusOutlined,
+  FilterOutlined,
+  ClockCircleOutlined,
+  ThunderboltOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { motion } from 'framer-motion';
 import { KanbanSkeleton } from "../../../shared/components";
 import {
@@ -29,7 +33,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   useCommunity,
-  useCommunities,
+  useMyCommunities,
 } from "../../community/hooks/useCommunities";
 import { tasksApi, type CreateTaskPayload } from '../../../api/tasks.api';
 
@@ -62,10 +66,23 @@ const PRIORITY_CONFIG = {
 };
 
 /* ═══ Sortable Task Card ═══ */
-const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }> = ({ task, isDraggingOverlay }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+const SortableTaskCard: React.FC<{
+  task: TaskItem;
+  isDraggingOverlay?: boolean;
+  onDelete?: (task: TaskItem) => void;
+}> = ({ task, isDraggingOverlay, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
   const pc = PRIORITY_CONFIG[task.priority];
-  const isDueSoon = task.dueDate && new Date(task.dueDate) < new Date(Date.now() + 3 * 86400000);
+  const isDueSoon =
+    task.dueDate &&
+    new Date(task.dueDate) < new Date(Date.now() + 3 * 86400000);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -77,36 +94,83 @@ const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <motion.div
         layout={!isDraggingOverlay}
-        whileHover={isDraggingOverlay ? undefined : { y: -2, boxShadow: '0 12px 32px rgba(0,0,0,0.3)' }}
+        whileHover={
+          isDraggingOverlay
+            ? undefined
+            : { y: -2, boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }
+        }
         style={{
-          background: isDraggingOverlay ? 'rgba(30, 30, 50, 0.95)' : 'var(--c-glass-base, rgba(22, 22, 34, 0.7))',
-          backdropFilter: 'blur(16px)',
-          border: isDraggingOverlay ? '2px solid rgba(124,106,239,0.5)' : '1px solid var(--c-glass-border, rgba(255,255,255,0.04))',
+          background: isDraggingOverlay
+            ? "rgba(30, 30, 50, 0.95)"
+            : "var(--c-glass-base, rgba(22, 22, 34, 0.7))",
+          backdropFilter: "blur(16px)",
+          border: isDraggingOverlay
+            ? "2px solid rgba(124,106,239,0.5)"
+            : "1px solid var(--c-glass-border, rgba(255,255,255,0.04))",
           borderRadius: 16,
           padding: 18,
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: isDragging ? "grabbing" : "grab",
           marginBottom: 12,
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: isDraggingOverlay ? '0 20px 50px rgba(124,106,239,0.3)' : 'none',
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: isDraggingOverlay
+            ? "0 20px 50px rgba(124,106,239,0.3)"
+            : "none",
         }}
       >
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
-          background: `linear-gradient(to bottom, ${pc.color}, transparent)`, opacity: 0.7
-        }} />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            background: `linear-gradient(to bottom, ${pc.color}, transparent)`,
+            opacity: 0.7,
+          }}
+        />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: pc.color,
-            boxShadow: task.priority === 'urgent' ? `0 0 10px ${pc.color}` : 'none',
-          }} />
-          <Text style={{ color: 'var(--c-text-dim, #71717A)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 10,
+          }}
+        >
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: pc.color,
+              boxShadow:
+                task.priority === "urgent" ? `0 0 10px ${pc.color}` : "none",
+            }}
+          />
+          <Text
+            style={{
+              color: "var(--c-text-dim, #71717A)",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              fontWeight: 600,
+            }}
+          >
             {pc.label}
           </Text>
         </div>
 
-        <Text style={{ color: 'var(--c-text-bright, #F4F4F5)', fontSize: 14, fontWeight: 600, display: 'block', lineHeight: 1.5, marginBottom: 12 }}>
+        <Text
+          style={{
+            color: "var(--c-text-bright, #F4F4F5)",
+            fontSize: 14,
+            fontWeight: 600,
+            display: "block",
+            lineHeight: 1.5,
+            marginBottom: 12,
+          }}
+        >
           {task.title}
         </Text>
 
@@ -114,12 +178,20 @@ const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }
           <div style={{ marginBottom: 12 }}>
             <Space size={4}>
               {task.tags.map((tag) => (
-                <Tag key={tag} style={{
-                  margin: 0, background: 'var(--c-accent-muted)',
-                  borderColor: 'rgba(124,106,239,0.12)', color: 'var(--c-accent-soft)',
-                  fontSize: 10, borderRadius: 6, padding: '0 8px',
-                  lineHeight: '20px', fontWeight: 500,
-                }}>
+                <Tag
+                  key={tag}
+                  style={{
+                    margin: 0,
+                    background: "var(--c-accent-muted)",
+                    borderColor: "rgba(124,106,239,0.12)",
+                    color: "var(--c-accent-soft)",
+                    fontSize: 10,
+                    borderRadius: 6,
+                    padding: "0 8px",
+                    lineHeight: "20px",
+                    fontWeight: 500,
+                  }}
+                >
                   {tag}
                 </Tag>
               ))}
@@ -127,11 +199,29 @@ const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Avatar.Group size={24} max={{ count: 3 }} style={{ display: 'flex' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Avatar.Group
+            size={24}
+            max={{ count: 3 }}
+            style={{ display: "flex" }}
+          >
             {task.assignees.map((a, i) => (
               <Tooltip key={i} title={a.name}>
-                <Avatar src={a.avatarUrl} size={24} style={{ background: 'var(--c-accent)', fontSize: 10, fontWeight: 700 }}>
+                <Avatar
+                  src={a.avatarUrl}
+                  size={24}
+                  style={{
+                    background: "var(--c-accent)",
+                    fontSize: 10,
+                    fontWeight: 700,
+                  }}
+                >
                   {a.name[0]}
                 </Avatar>
               </Tooltip>
@@ -142,15 +232,63 @@ const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }
             {task.dueDate && (
               <Tooltip title={`Due: ${task.dueDate}`}>
                 <Space size={3}>
-                  <ClockCircleOutlined style={{ color: isDueSoon ? 'var(--c-error)' : 'var(--c-text-dim, #71717A)', fontSize: 11 }} />
-                  <Text style={{ color: isDueSoon ? 'var(--c-error)' : 'var(--c-text-dim, #71717A)', fontSize: 11, fontWeight: 500 }}>
-                    {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  <ClockCircleOutlined
+                    style={{
+                      color: isDueSoon
+                        ? "var(--c-error)"
+                        : "var(--c-text-dim, #71717A)",
+                      fontSize: 11,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      color: isDueSoon
+                        ? "var(--c-error)"
+                        : "var(--c-text-dim, #71717A)",
+                      fontSize: 11,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {new Date(task.dueDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </Text>
                 </Space>
               </Tooltip>
             )}
             {task.commentCount > 0 && (
-              <Text style={{ color: 'var(--c-text-dim, #71717A)', fontSize: 11, fontWeight: 500 }}>💬 {task.commentCount}</Text>
+              <Text
+                style={{
+                  color: "var(--c-text-dim, #71717A)",
+                  fontSize: 11,
+                  fontWeight: 500,
+                }}
+              >
+                💬 {task.commentCount}
+              </Text>
+            )}
+            {onDelete && !isDraggingOverlay && (
+              <Tooltip title="Delete task">
+                <DeleteOutlined
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(task);
+                  }}
+                  style={{
+                    color: "var(--c-text-dim, #71717A)",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "var(--c-error, #EF4444)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "var(--c-text-dim, #71717A)")
+                  }
+                />
+              </Tooltip>
             )}
           </Space>
         </div>
@@ -161,12 +299,13 @@ const SortableTaskCard: React.FC<{ task: TaskItem; isDraggingOverlay?: boolean }
 
 /* ═══ Droppable Column ═══ */
 const DroppableColumn: React.FC<{
-  col: typeof COLUMNS[0];
+  col: (typeof COLUMNS)[0];
   tasks: TaskItem[];
   isOver: boolean;
   colIdx: number;
   onAddClick: () => void;
-}> = ({ col, tasks, isOver, colIdx, onAddClick }) => {
+  onDelete?: (task: TaskItem) => void;
+}> = ({ col, tasks, isOver, colIdx, onAddClick, onDelete }) => {
   const { setNodeRef } = useDroppable({ id: col.key });
 
   return (
@@ -175,25 +314,48 @@ const DroppableColumn: React.FC<{
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: colIdx * 0.06, ease: [0.16, 1, 0.3, 1] }}
-      style={{ minWidth: 300, maxWidth: 300, flex: '0 0 300px' }}
+      style={{ minWidth: 300, maxWidth: 300, flex: "0 0 300px" }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, padding: '0 6px' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+          padding: "0 6px",
+        }}
+      >
         <Space size={10}>
           <span style={{ fontSize: 16 }}>{col.emoji}</span>
-          <Text style={{ color: 'var(--c-text-bright, #F4F4F5)', fontWeight: 700, fontSize: 14, fontFamily: "'Outfit'" }}>
+          <Text
+            style={{
+              color: "var(--c-text-bright, #F4F4F5)",
+              fontWeight: 700,
+              fontSize: 14,
+              fontFamily: "'Outfit'",
+            }}
+          >
             {col.title}
           </Text>
           <Badge
             count={tasks.length}
             style={{
-              background: 'var(--c-accent-muted)',
-              color: 'var(--c-text-muted, #A1A1AA)', fontSize: 11,
-              boxShadow: 'none', fontWeight: 600,
+              background: "var(--c-accent-muted)",
+              color: "var(--c-text-muted, #A1A1AA)",
+              fontSize: 11,
+              boxShadow: "none",
+              fontWeight: 600,
             }}
           />
         </Space>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button type="text" size="small" icon={<PlusOutlined />} style={{ color: 'var(--c-text-dim, #71717A)', fontSize: 12 }} onClick={onAddClick} />
+          <Button
+            type="text"
+            size="small"
+            icon={<PlusOutlined />}
+            style={{ color: "var(--c-text-dim, #71717A)", fontSize: 12 }}
+            onClick={onAddClick}
+          />
         </motion.div>
       </div>
 
@@ -201,39 +363,56 @@ const DroppableColumn: React.FC<{
         ref={setNodeRef}
         style={{
           background: isOver
-            ? 'var(--c-accent-muted)'
-            : 'var(--c-glass-base, rgba(10, 10, 18, 0.4))',
-          backdropFilter: 'blur(12px)',
-          borderRadius: 14, padding: 14,
+            ? "var(--c-accent-muted)"
+            : "var(--c-glass-base, rgba(10, 10, 18, 0.4))",
+          backdropFilter: "blur(12px)",
+          borderRadius: 14,
+          padding: 14,
           minHeight: 500,
           border: isOver
-            ? '2px dashed rgba(124,106,239,0.4)'
-            : '1px solid var(--c-glass-border, rgba(255,255,255,0.03))',
-          boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.15)',
-          position: 'relative', overflow: 'hidden',
-          transition: 'all 0.2s ease',
+            ? "2px dashed rgba(124,106,239,0.4)"
+            : "1px solid var(--c-glass-border, rgba(255,255,255,0.03))",
+          boxShadow: "inset 0 4px 20px rgba(0,0,0,0.15)",
+          position: "relative",
+          overflow: "hidden",
+          transition: "all 0.2s ease",
         }}
       >
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 80,
-          background: `radial-gradient(ellipse at top, color-mix(in srgb, ${col.color} 6%, transparent) 0%, transparent 70%)`,
-          pointerEvents: 'none'
-        }} />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            background: `radial-gradient(ellipse at top, color-mix(in srgb, ${col.color} 6%, transparent) 0%, transparent 70%)`,
+            pointerEvents: "none",
+          }}
+        />
 
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={tasks.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
           {tasks.map((task) => (
-            <SortableTaskCard key={task.id} task={task} />
+            <SortableTaskCard key={task.id} task={task} onDelete={onDelete} />
           ))}
         </SortableContext>
 
         {tasks.length === 0 && (
-          <div style={{
-            textAlign: 'center', padding: '48px 16px',
-            color: isOver ? 'var(--c-accent-soft)' : 'var(--c-text-ghost, #52525B)',
-            fontSize: 13, fontWeight: 500,
-            transition: 'color 0.2s',
-          }}>
-            {isOver ? 'Drop here' : 'No tasks'}
+          <div
+            style={{
+              textAlign: "center",
+              padding: "48px 16px",
+              color: isOver
+                ? "var(--c-accent-soft)"
+                : "var(--c-text-ghost, #52525B)",
+              fontSize: 13,
+              fontWeight: 500,
+              transition: "color 0.2s",
+            }}
+          >
+            {isOver ? "Drop here" : "No tasks"}
           </div>
         )}
       </div>
@@ -245,7 +424,7 @@ const DroppableColumn: React.FC<{
 const KanbanPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: communities } = useCommunities();
+  const { data: communities } = useMyCommunities();
   const communityList: any[] = Array.isArray(communities)
     ? communities
     : ((communities as any)?.items ?? []);
@@ -282,6 +461,42 @@ const KanbanPage: React.FC = () => {
       message.success('Task created');
     },
   });
+
+  const deleteTaskMut = useMutation({
+    mutationFn: ({
+      taskId,
+      taskCommunityId,
+    }: {
+      taskId: string;
+      taskCommunityId: string;
+    }) => tasksApi.delete(taskCommunityId || communityId, taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: slug ? ["tasks", communityId] : ["tasks", "personal"],
+      });
+      message.success("Task deleted");
+    },
+    onError: () => {
+      message.error("Failed to delete task");
+    },
+  });
+
+  const handleDeleteTask = useCallback(
+    (task: TaskItem) => {
+      Modal.confirm({
+        title: "Delete Task",
+        content: `Are you sure you want to delete "${task.title}"?`,
+        okText: "Delete",
+        okButtonProps: { danger: true },
+        onOk: () =>
+          deleteTaskMut.mutate({
+            taskId: task.id,
+            taskCommunityId: task.communityId,
+          }),
+      });
+    },
+    [deleteTaskMut],
+  );
 
   // Organize tasks into columns
   const tasksByColumn = useMemo(() => {
@@ -552,6 +767,7 @@ const KanbanPage: React.FC = () => {
                 isOver={overColumn === col.key}
                 colIdx={colIdx}
                 onAddClick={() => setIsModalOpen(true)}
+                onDelete={handleDeleteTask}
               />
             ))}
           </div>

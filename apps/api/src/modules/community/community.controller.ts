@@ -37,6 +37,16 @@ export class CommunityController {
     return this.communityService.findAll(pagination, tagArray, userId || undefined);
   }
 
+  @Get('joined')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List communities the current user has joined' })
+  async findJoined(
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.communityService.findJoined(userId);
+  }
+
   @Get(':slug')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get community by slug' })

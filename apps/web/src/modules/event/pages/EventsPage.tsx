@@ -18,7 +18,7 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { EventCard, EventListSkeleton } from '../../../shared/components';
-import { useCommunities } from '../../community/hooks/useCommunities';
+import { useMyCommunities } from "../../community/hooks/useCommunities";
 import { eventsApi } from '../../../api/events.api';
 
 const { Title, Text } = Typography;
@@ -31,7 +31,7 @@ const EventsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
-  const { data: communities } = useCommunities();
+  const { data: communities } = useMyCommunities();
   const communityList: any[] = Array.isArray(communities) ? communities : (communities as any)?.items ?? [];
   const ownedCommunities = communityList.filter(
     (c: any) =>

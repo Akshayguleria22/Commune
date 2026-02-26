@@ -132,6 +132,27 @@ export class CollaborationService {
     return task;
   }
 
+  async deleteTask(taskId: string, userId: string): Promise<void> {
+    const task = await this.findTaskById(taskId);
+
+    const membership = await this.communityService.checkMembership(task.communityId, userId);
+    if (!membership) {
+      throw new ForbiddenException('You must be a member of this community to delete tasks');
+    }
+
+    // Only the creator or someone with manage_tasks permission can delete
+    if (task.creatorId !== userId && !membership.role.permissions.manage_tasks) {
+      throw new ForbiddenException('You do not have permission to delete this task');
+    }
+
+    // Remove assignments and comments first
+    await this.assignmentRepo.delete({ taskId });
+    await this.commentRepo.delete({ taskId });
+    await this.taskRepo.remove(task);
+
+    this.eventEmitter.emit('task.deleted', { taskId, communityId: task.communityId, userId });
+  }
+
   async addComment(taskId: string, userId: string, dto: CreateTaskCommentDto): Promise<TaskComment> {
     await this.findTaskById(taskId); // verify task exists
     const comment = this.commentRepo.create({

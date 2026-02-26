@@ -117,22 +117,22 @@ const features = [
 
 const testimonials = [
   {
-    name: "Sarah Chen",
+    name: "Kartik Guleria",
     role: "Full Stack Developer",
     text: "Commune transformed how our open-source team collaborates. The reputation system is brilliant.",
     rating: 5,
   },
   {
-    name: "Marcus Rivera",
-    role: "DevOps Engineer",
+    name: "Karan",
+    role: "Freelance Developer",
     text: "Finally, a platform that understands developer workflows. The Kanban boards + community chat is perfect.",
-    rating: 5,
+    rating: 4,
   },
   {
-    name: "Emily Park",
+    name: "Prateek",
     role: "UX Designer",
     text: "The portfolio feature alone is worth it. It auto-tracks everything and looks stunning.",
-    rating: 5,
+    rating: 4,
   },
 ];
 
@@ -324,9 +324,9 @@ const LandingPage: React.FC = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.96]);
 
-  const stat1 = useCounter(2500);
-  const stat2 = useCounter(180);
-  const stat3 = useCounter(12000);
+  const stat1 = useCounter(10);
+  const stat2 = useCounter(19);
+  const stat3 = useCounter(50);
   const stat4 = useCounter(99);
 
   const primaryBtn: React.CSSProperties = {
@@ -656,8 +656,12 @@ const LandingPage: React.FC = () => {
             {/* Social proof mini */}
             <motion.div variants={fadeUp} style={{ marginTop: 40 }}>
               <Space size={16} align="center">
-                <Avatar.Group maxCount={5} size={32} style={{ marginRight: 4 }}>
-                  {["A", "B", "C", "D", "E"].map((l, i) => (
+                <Avatar.Group
+                  max={{ count: 5 }}
+                  size={32}
+                  style={{ marginRight: 4 }}
+                >
+                  {["K", "K", "P", "D", "A"].map((l, i) => (
                     <Avatar
                       key={l}
                       style={{
@@ -681,7 +685,7 @@ const LandingPage: React.FC = () => {
                   <Text
                     style={{ color: "#CBCBD7", fontSize: 13, fontWeight: 600 }}
                   >
-                    Trusted by 2,500+ developers
+                    Trusted by 10+ developers
                   </Text>
                   <div style={{ display: "flex", gap: 2, marginTop: 2 }}>
                     {[1, 2, 3, 4, 5].map((s) => (

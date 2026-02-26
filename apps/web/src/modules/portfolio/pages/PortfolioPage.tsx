@@ -43,7 +43,7 @@ import {
   useRemoveSkill,
   useUpdatePortfolio,
 } from "../hooks/usePortfolio";
-import { useCommunities } from "../../community/hooks/useCommunities";
+import { useMyCommunities } from "../../community/hooks/useCommunities";
 import { useAuthStore } from "../../../stores/auth.store";
 
 const { Title, Text, Paragraph } = Typography;
@@ -71,14 +71,14 @@ const PortfolioPage: React.FC = () => {
   const { data: userPortfolio, isLoading: userLoading } = useUserPortfolio(
     isMe ? "" : (username ?? ""),
   );
-  const { data: communitiesData } = useCommunities();
+  const { data: communitiesData } = useMyCommunities();
   const addSkillMut = useAddSkill();
   const removeSkillMut = useRemoveSkill();
   const updatePortfolioMut = useUpdatePortfolio();
   const myCommunities: any[] = isMe
     ? Array.isArray(communitiesData)
-      ? communitiesData.filter((c: any) => c.role)
-      : ((communitiesData as any)?.items ?? []).filter((c: any) => c.role)
+      ? communitiesData
+      : ((communitiesData as any)?.items ?? [])
     : [];
 
   const isLoading = isMe ? myLoading : userLoading;
@@ -139,12 +139,12 @@ const PortfolioPage: React.FC = () => {
 
   if (isLoading) return <PortfolioSkeleton />;
 
-  // Extract data from portfolio or fallback to auth user
-  const user = portfolio?.user ?? authUser ?? {};
-  const displayName = user.displayName ?? username ?? "User";
-  const headline = portfolio?.headline ?? user.bio ?? "";
+  // Extract data from portfolio or fallback to auth user for own profile only
+  const profileUser = portfolio?.user ?? (isMe ? authUser : null) ?? {};
+  const displayName = profileUser.displayName ?? username ?? "User";
+  const headline = portfolio?.headline ?? profileUser.bio ?? "";
   const summary = portfolio?.summary ?? "";
-  const website = portfolio?.websiteUrl ?? user.website ?? "";
+  const website = portfolio?.websiteUrl ?? profileUser.website ?? "";
   const skills: any[] = portfolio?.skills ?? [];
   const entries: any[] = portfolio?.entries ?? [];
   const contribs: any[] = portfolio?.contributions ?? [];
@@ -258,7 +258,7 @@ const PortfolioPage: React.FC = () => {
         >
           <Avatar
             size={160}
-            src={user.avatarUrl}
+            src={profileUser.avatarUrl}
             style={{
               background: "var(--c-accent)",
               fontSize: 64,
@@ -270,7 +270,7 @@ const PortfolioPage: React.FC = () => {
           >
             {displayName[0]}
           </Avatar>
-          {user.isVerified && (
+          {profileUser.isVerified && (
             <div
               style={{
                 position: "absolute",
@@ -333,7 +333,7 @@ const PortfolioPage: React.FC = () => {
                   marginBottom: 8,
                 }}
               >
-                @{user.username ?? username}
+                @{profileUser.username ?? username}
               </Text>
             </div>
             {isMe && (
@@ -374,7 +374,7 @@ const PortfolioPage: React.FC = () => {
                 fontSize: 14,
               }}
             >
-              {user.location ? user.location : ""}
+              {profileUser.location ? profileUser.location : ""}
             </Text>
             <div
               style={{
@@ -1019,6 +1019,6 @@ const PortfolioPage: React.FC = () => {
       </Modal>
     </motion.div>
   );
-};
+};;
 
 export default PortfolioPage;

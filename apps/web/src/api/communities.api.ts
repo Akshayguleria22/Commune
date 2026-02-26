@@ -24,6 +24,9 @@ export const communitiesApi = {
   list: (params?: PaginationParams & { tags?: string }) =>
     apiClient.get('/communities', { params }).then((r) => r.data.data ?? r.data),
 
+  listJoined: () =>
+    apiClient.get('/communities/joined').then((r) => r.data.data ?? r.data),
+
   getBySlug: (slug: string) =>
     apiClient.get(`/communities/${slug}`).then((r) => r.data.data ?? r.data),
 

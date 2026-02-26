@@ -84,14 +84,16 @@ export class PortfolioService {
   }
 
   async getFullPortfolio(userId: string) {
-    const [portfolio, entries, skills] = await Promise.all([
+    const [portfolio, entries, skills, user] = await Promise.all([
       this.getByUserId(userId),
       this.getEntries(userId),
       this.getSkills(userId),
+      this.userRepo.findOne({ where: { id: userId }, select: ['id', 'username', 'displayName', 'avatarUrl', 'bio'] }),
     ]);
 
     return {
       ...portfolio,
+      user: user ?? undefined,
       entries,
       skills,
     };

@@ -129,6 +129,19 @@ export class CommunityService {
     return new PaginatedResponseDto(communities, nextCursor, hasMore);
   }
 
+  async findJoined(userId: string): Promise<Community[]> {
+    const memberships = await this.membershipRepo.find({
+      where: { userId, status: MembershipStatus.ACTIVE },
+      relations: ['community', 'role'],
+    });
+
+    return memberships.map((m) => {
+      const c = m.community as any;
+      c.role = m.role?.name ?? 'Member';
+      return c;
+    });
+  }
+
   async findBySlug(slug: string, userId?: string): Promise<Community> {
     const qb = this.communityRepo.createQueryBuilder('c');
 

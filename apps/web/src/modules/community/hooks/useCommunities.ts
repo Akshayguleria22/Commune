@@ -20,6 +20,14 @@ export function useCommunities(params?: PaginationParams & { tags?: string }) {
   });
 }
 
+/** Fetch only communities the current user has joined */
+export function useMyCommunities() {
+  return useQuery({
+    queryKey: [...communityKeys.all, 'joined'] as const,
+    queryFn: () => communitiesApi.listJoined(),
+  });
+}
+
 /** Fetch a single community by slug */
 export function useCommunity(slug: string) {
   return useQuery({

@@ -35,6 +35,9 @@ export const tasksApi = {
   update: (communityId: string, taskId: string, data: UpdateTaskPayload) =>
     apiClient.patch(`/communities/${communityId}/tasks/${taskId}`, data).then((r) => r.data.data ?? r.data),
 
+  delete: (communityId: string, taskId: string) =>
+    apiClient.delete(`/communities/${communityId}/tasks/${taskId}`).then((r) => r.data),
+
   getComments: (communityId: string, taskId: string) =>
     apiClient.get(`/communities/${communityId}/tasks/${taskId}/comments`).then((r) => r.data.data ?? r.data),
 

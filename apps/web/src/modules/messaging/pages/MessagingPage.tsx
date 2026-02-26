@@ -8,6 +8,7 @@ import {
   Empty,
   Space,
   Tabs,
+  Tag,
   message as antMsg,
   Skeleton,
 } from "antd";
@@ -32,6 +33,7 @@ const MessagingPage: React.FC = () => {
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
+  const [activeTab, setActiveTab] = useState("dms");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -143,8 +145,12 @@ const MessagingPage: React.FC = () => {
                 <Button
                   type="text"
                   icon={<UserAddOutlined />}
+                  onClick={() => setActiveTab("requests")}
                   style={{
-                    color: "var(--c-text-muted)",
+                    color:
+                      activeTab === "requests"
+                        ? "var(--c-accent)"
+                        : "var(--c-text-muted)",
                     width: 32,
                     height: 32,
                   }}
@@ -167,7 +173,8 @@ const MessagingPage: React.FC = () => {
 
         {/* Tabs */}
         <Tabs
-          defaultActiveKey="dms"
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key)}
           size="small"
           style={{ flex: 1, display: "flex", flexDirection: "column" }}
           tabBarStyle={{ padding: "0 16px", marginBottom: 0 }}
@@ -310,81 +317,6 @@ const MessagingPage: React.FC = () => {
               ),
               children: (
                 <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
-                  {/* Pending requests */}
-                  {pending.length > 0 && (
-                    <div
-                      style={{
-                        padding: "8px 20px",
-                        borderBottom: "1px solid var(--c-glass-border)",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "var(--c-text-dim)",
-                          fontSize: 11,
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        Pending Requests ({pending.length})
-                      </Text>
-                      {pending.map((p: any) => (
-                        <div
-                          key={p.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 0",
-                          }}
-                        >
-                          <Avatar
-                            src={p.requester?.avatarUrl}
-                            size={32}
-                            style={{ background: "var(--c-accent)" }}
-                          >
-                            {p.requester?.displayName?.[0] ?? "?"}
-                          </Avatar>
-                          <div style={{ flex: 1 }}>
-                            <Text
-                              style={{
-                                color: "var(--c-text-bright)",
-                                fontSize: 13,
-                                fontWeight: 600,
-                              }}
-                            >
-                              {p.requester?.displayName}
-                            </Text>
-                          </div>
-                          <Space size={4}>
-                            <Button
-                              type="primary"
-                              size="small"
-                              icon={<CheckOutlined />}
-                              onClick={() =>
-                                respondMut.mutate({ id: p.id, accept: true })
-                              }
-                              style={{
-                                background: "var(--c-success)",
-                                border: "none",
-                                borderRadius: 8,
-                              }}
-                            />
-                            <Button
-                              size="small"
-                              icon={<CloseOutlined />}
-                              onClick={() =>
-                                respondMut.mutate({ id: p.id, accept: false })
-                              }
-                              style={{ borderRadius: 8 }}
-                            />
-                          </Space>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                   {/* Friends list */}
                   {friendsLoading ? (
                     <div style={{ padding: "12px 20px" }}>
@@ -472,7 +404,10 @@ const MessagingPage: React.FC = () => {
                                 const ch = dmChannels.find(
                                   (c: any) => c.channelId === f.dmChannelId,
                                 );
-                                if (ch) setSelectedChannel(ch);
+                                if (ch) {
+                                  setSelectedChannel(ch);
+                                  setActiveTab("dms");
+                                }
                               }}
                               style={{ color: "var(--c-accent)" }}
                             />
@@ -480,6 +415,139 @@ const MessagingPage: React.FC = () => {
                         </div>
                       );
                     })
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "requests",
+              label: (
+                <span>
+                  <UserAddOutlined /> Requests
+                  {pending.length > 0 ? ` (${pending.length})` : ""}
+                </span>
+              ),
+              children: (
+                <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
+                  {pending.length === 0 ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={
+                        <Text style={{ color: "var(--c-text-dim)" }}>
+                          No pending requests
+                        </Text>
+                      }
+                      style={{ marginTop: 40 }}
+                    />
+                  ) : (
+                    <div style={{ padding: "8px 20px" }}>
+                      <Text
+                        style={{
+                          color: "var(--c-text-dim)",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                          display: "block",
+                          marginBottom: 8,
+                        }}
+                      >
+                        Pending Requests
+                      </Text>
+                      {pending.map((p: any) => {
+                        const isIncoming = p.addresseeId === me?.id;
+                        const otherUser = isIncoming
+                          ? p.requester
+                          : p.addressee;
+                        return (
+                          <motion.div
+                            key={p.id}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "10px 0",
+                              borderBottom: "1px solid var(--c-glass-border)",
+                            }}
+                          >
+                            <Avatar
+                              src={otherUser?.avatarUrl}
+                              size={36}
+                              style={{ background: "var(--c-accent)" }}
+                            >
+                              {otherUser?.displayName?.[0] ?? "?"}
+                            </Avatar>
+                            <div style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  color: "var(--c-text-bright)",
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  display: "block",
+                                }}
+                              >
+                                {otherUser?.displayName}
+                              </Text>
+                              <Text
+                                style={{
+                                  color: "var(--c-text-dim)",
+                                  fontSize: 11,
+                                }}
+                              >
+                                {isIncoming
+                                  ? "Wants to be your friend"
+                                  : "Request sent"}
+                              </Text>
+                            </div>
+                            {isIncoming ? (
+                              <Space size={4}>
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  icon={<CheckOutlined />}
+                                  onClick={() =>
+                                    respondMut.mutate({
+                                      id: p.id,
+                                      accept: true,
+                                    })
+                                  }
+                                  style={{
+                                    background: "var(--c-success)",
+                                    border: "none",
+                                    borderRadius: 8,
+                                  }}
+                                />
+                                <Button
+                                  size="small"
+                                  icon={<CloseOutlined />}
+                                  onClick={() =>
+                                    respondMut.mutate({
+                                      id: p.id,
+                                      accept: false,
+                                    })
+                                  }
+                                  style={{ borderRadius: 8 }}
+                                />
+                              </Space>
+                            ) : (
+                              <Tag
+                                style={{
+                                  background: "var(--c-accent-muted)",
+                                  border: "none",
+                                  color: "var(--c-accent-soft)",
+                                  borderRadius: 6,
+                                  fontSize: 11,
+                                }}
+                              >
+                                Pending
+                              </Tag>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               ),

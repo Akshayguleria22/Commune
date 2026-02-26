@@ -52,6 +52,16 @@ export class CollaborationController {
     return this.collaborationService.updateTask(id, userId, dto);
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a task' })
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    await this.collaborationService.deleteTask(id, userId);
+    return { message: 'Task deleted' };
+  }
+
   @Get(':id/comments')
   @ApiOperation({ summary: 'List task comments' })
   async getComments(@Param('id') id: string) {
