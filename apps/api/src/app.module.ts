@@ -30,20 +30,33 @@ import { appConfig } from './config/app.config';
     // Database
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('database.host'),
-        port: configService.get<number>('database.port'),
-        username: configService.get<string>('database.username'),
-        password: configService.get<string>('database.password'),
-        database: configService.get<string>('database.name'),
-        autoLoadEntities: true,
-        synchronize: false, // We use migrations instead
-        logging: configService.get<string>('NODE_ENV') === 'development',
-        ssl: configService.get<string>('NODE_ENV') === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('database.url');
+        const dbEndpoint = configService.get<string>('database.endpoint');
+        const dbServername = configService.get<string>('database.servername');
+        const sslEnabled = process.env.DB_SSL === 'true' || configService.get<string>('NODE_ENV') === 'production';
+        return {
+          type: 'postgres',
+          url: databaseUrl,
+          host: databaseUrl ? undefined : configService.get<string>('database.host'),
+          port: databaseUrl ? undefined : configService.get<number>('database.port'),
+          username: databaseUrl ? undefined : configService.get<string>('database.username'),
+          password: databaseUrl ? undefined : configService.get<string>('database.password'),
+          database: databaseUrl ? undefined : configService.get<string>('database.name'),
+          autoLoadEntities: true,
+          synchronize: false, // We use migrations instead
+          logging: configService.get<string>('NODE_ENV') === 'development',
+          ssl: sslEnabled
+            ? {
+              rejectUnauthorized: false,
+              ...(dbServername ? { servername: dbServername } : {}),
+            }
+            : false,
+          extra: dbEndpoint
+            ? { options: `endpoint=${dbEndpoint}` }
+            : undefined,
+        };
+      },
       inject: [ConfigService],
     }),
 

@@ -34,6 +34,8 @@
 
 ### Backend (`apps/api/.env`)
 
+Start from `apps/api/.env.production.example` and set your real secrets in hosting provider env settings.
+
 ```env
 NODE_ENV=production
 PORT=3000
@@ -41,12 +43,11 @@ PORT=3000
 # Frontend URL — CORS origin
 FRONTEND_URL=https://your-domain.com
 
-# Database — use a managed PostgreSQL (Neon, Supabase, Railway, AWS RDS)
-DB_HOST=your-db-host.com
-DB_PORT=5432
-DB_USERNAME=commune_prod
-DB_PASSWORD=<strong-random-password>
-DB_NAME=commune_prod
+# Database (Neon)
+# Runtime traffic: use pooler URL
+DATABASE_URL=postgresql://<user>:<password>@<pooler-host>/<db>?sslmode=verify-full
+# Optional migration URL: direct endpoint (without pooler)
+MIGRATION_DATABASE_URL=postgresql://<user>:<password>@<direct-host>/<db>?sslmode=verify-full
 DB_SSL=true
 
 # JWT — generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
