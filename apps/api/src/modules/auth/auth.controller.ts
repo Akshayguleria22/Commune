@@ -102,7 +102,9 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: any, @Res() res: any) {
     const result = await this.authService.validateOAuthUser(req.user);
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const frontendUrl = this.configService
+      .get<string>('FRONTEND_URL', 'http://localhost:5173')
+      .replace(/\/$/, '');
     const params = new URLSearchParams({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
@@ -122,7 +124,9 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() req: any, @Res() res: any) {
     const result = await this.authService.validateOAuthUser(req.user);
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const frontendUrl = this.configService
+      .get<string>('FRONTEND_URL', 'http://localhost:5173')
+      .replace(/\/$/, '');
     const params = new URLSearchParams({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
