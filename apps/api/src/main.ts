@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const normalizeOrigin = (origin: string) => origin.trim().replace(/\/+$/, '');
 
   // Global prefix
   app.setGlobalPrefix('api');
@@ -20,8 +21,20 @@ async function bootstrap() {
   });
 
   // CORS
+  const frontendUrl = configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+  const allowedOrigins = frontendUrl
+    .split(',')
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean);
+  const corsOrigin =
+    allowedOrigins.length === 0
+      ? 'http://localhost:5173'
+      : allowedOrigins.length === 1
+        ? allowedOrigins[0]
+        : allowedOrigins;
+
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:5173'),
+    origin: corsOrigin,
     credentials: true,
   });
 
