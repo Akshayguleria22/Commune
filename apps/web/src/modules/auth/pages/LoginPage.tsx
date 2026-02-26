@@ -14,6 +14,7 @@ const LoginPage: React.FC = () => {
   const { setAuth } = useAuthStore();
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
+  const apiBaseUrl = (apiClient.defaults.baseURL || "").replace(/\/$/, "");
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -209,8 +210,7 @@ const LoginPage: React.FC = () => {
             block
             icon={<GithubOutlined />}
             onClick={() => {
-              window.location.href =
-                "http://localhost:3000/api/v1/auth/oauth/github";
+              window.location.href = `${apiBaseUrl}/auth/oauth/github`;
             }}
             style={{
               height: 44,
@@ -227,8 +227,7 @@ const LoginPage: React.FC = () => {
             block
             icon={<GoogleOutlined />}
             onClick={() => {
-              window.location.href =
-                "http://localhost:3000/api/v1/auth/oauth/google";
+              window.location.href = `${apiBaseUrl}/auth/oauth/google`;
             }}
             style={{
               height: 44,
