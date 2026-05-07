@@ -13,7 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, UpdateProfileDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, UpdateProfileDto, GuestLoginDto } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators';
 import { ConfigService } from '@nestjs/config';
@@ -42,6 +42,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password' })
   async login(@Body() dto: LoginDto) {
     const result = await this.authService.login(dto);
+    return {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: this.sanitizeUser(result.user),
+    };
+  }
+
+  @Post('guest')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Auto-login as guest' })
+  async guestLogin(@Body() dto: GuestLoginDto, @Req() req: any) {
+    const result = await this.authService.loginGuest(dto.guestId, {
+      userAgent: req.headers?.['user-agent'],
+      ipAddress: req.ip,
+    });
     return {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,

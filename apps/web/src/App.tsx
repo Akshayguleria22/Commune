@@ -6,6 +6,8 @@ import AppLayout from './layouts/AppLayout';
 import { useAuthStore } from './stores/auth.store';
 import { useUIStore } from './stores/ui.store';
 import React, { Suspense } from 'react';
+import { authApi } from './api/auth.api';
+import { getOrCreateGuestId } from './shared/utils/guest';
 
 // Lazy-loaded pages
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
@@ -26,9 +28,10 @@ const NotificationsPage = React.lazy(
   () => import("./modules/notification/pages/NotificationsPage"),
 );
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode; authReady: boolean }> = ({ children, authReady }) => {
   const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!authReady) return <LoadingFallback message="Preparing guest session..." />;
+  if (!isAuthenticated) return <LoadingFallback message="Connecting to server..." />;
   return <>{children}</>;
 };
 
@@ -42,7 +45,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60 * 1000, retry: 1, refetchOnWindowFocus: false } },
 });
 
-const LoadingFallback = () => (
+const LoadingFallback: React.FC<{ message?: string }> = ({ message }) => (
   <div style={{
     display: 'flex', justifyContent: 'center', alignItems: 'center',
     height: '100vh', background: 'var(--c-bg-void, #05050A)', flexDirection: 'column', gap: 16,
@@ -56,14 +59,45 @@ const LoadingFallback = () => (
       COMMUNE
     </div>
     <div style={{ color: 'var(--c-text-dim, #71717A)', fontSize: 14, fontFamily: 'Inter', fontWeight: 500 }}>
-      Loading workspace...
+      {message || 'Loading workspace...'}
     </div>
   </div>
 );
 
 const AppInner: React.FC = () => {
   const theme = useUIStore((s) => s.theme);
+  const setServerStarting = useUIStore((s) => s.setServerStarting);
   const activeTheme = theme === 'light' ? communeThemeLight : communeTheme;
+  const { isAuthenticated, setAuth } = useAuthStore();
+  const [authReady, setAuthReady] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const ensureGuestAuth = async () => {
+      if (isAuthenticated) {
+        if (!cancelled) setAuthReady(true);
+        return;
+      }
+
+      try {
+        const guestId = getOrCreateGuestId();
+        const result = await authApi.guest(guestId);
+        if (!cancelled) {
+          setAuth(result.user, result.accessToken, result.refreshToken);
+        }
+      } catch {
+        if (!cancelled) setServerStarting(true);
+      } finally {
+        if (!cancelled) setAuthReady(true);
+      }
+    };
+
+    ensureGuestAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, setAuth, setServerStarting]);
 
   return (
     <ConfigProvider theme={activeTheme}>
@@ -80,7 +114,7 @@ const AppInner: React.FC = () => {
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute authReady={authReady}>
                     <AppLayout />
                   </ProtectedRoute>
                 }

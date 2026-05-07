@@ -46,6 +46,14 @@ export class RefreshTokenDto {
   refreshToken: string;
 }
 
+export class GuestLoginDto {
+  @ApiProperty({ example: 'b7a8d43b-6d6c-4e13-9ef9-2a820e2c04ad' })
+  @IsString()
+  @MinLength(8)
+  @MaxLength(100)
+  guestId: string;
+}
+
 export class UpdateProfileDto {
   @ApiPropertyOptional({ example: 'John Doe' })
   @IsOptional()

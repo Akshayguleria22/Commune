@@ -31,7 +31,7 @@ const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar, theme, setTheme } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, theme, setTheme, serverStarting } = useUIStore();
   const search = useSearch();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
@@ -322,6 +322,20 @@ const AppLayout: React.FC = () => {
           </Space>
 
           <Space size={8}>
+            {serverStarting && (
+              <Tag
+                color="gold"
+                style={{
+                  borderRadius: 999,
+                  border: "1px solid var(--c-glass-border)",
+                  background: "var(--c-bg-hover)",
+                  color: "var(--c-text-bright)",
+                  fontWeight: 600,
+                }}
+              >
+                Server is starting, please wait
+              </Tag>
+            )}
             <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
               <Button
                 type="text"

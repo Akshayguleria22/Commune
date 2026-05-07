@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'crypto';
 import { User, Session } from './entities';
 import { RegisterDto, LoginDto, UpdateProfileDto } from './dto';
 
@@ -132,6 +133,34 @@ export class AuthService {
     return { ...tokens, user };
   }
 
+  async loginGuest(
+    guestId: string,
+    metadata?: { userAgent?: string; ipAddress?: string },
+  ): Promise<{ accessToken: string; refreshToken: string; user: User }> {
+    const { email, username, displayName } = this.buildGuestIdentity(guestId);
+
+    let user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      user = this.userRepository.create({
+        email,
+        username,
+        displayName,
+        isVerified: true,
+        isActive: true,
+      });
+      await this.userRepository.save(user);
+      this.eventEmitter.emit('user.registered', { userId: user.id });
+      this.logger.log(`Guest user created: ${user.email}`);
+    }
+
+    user.lastLoginAt = new Date();
+    await this.userRepository.save(user);
+
+    const tokens = await this.generateTokens(user, metadata);
+    return { ...tokens, user };
+  }
+
   async refreshTokens(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     const session = await this.sessionRepository.findOne({
       where: { refreshToken },
@@ -171,7 +200,10 @@ export class AuthService {
     return this.userRepository.findOne({ where: { id: userId } });
   }
 
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(
+    user: User,
+    metadata?: { userAgent?: string; ipAddress?: string },
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.id, email: user.email, username: user.username };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -186,10 +218,23 @@ export class AuthService {
       userId: user.id,
       refreshToken,
       expiresAt,
+      userAgent: metadata?.userAgent || null,
+      ipAddress: metadata?.ipAddress || null,
     });
 
     await this.sessionRepository.save(session);
 
     return { accessToken, refreshToken };
+  }
+
+  private buildGuestIdentity(guestId: string): { email: string; username: string; displayName: string } {
+    const normalized = guestId.trim().toLowerCase();
+    const hash = createHash('sha256').update(normalized).digest('hex');
+    const short = hash.slice(0, 12);
+    return {
+      email: `guest-${hash}@commune.local`,
+      username: `guest_${hash}`.slice(0, 50),
+      displayName: `Guest ${short}`,
+    };
   }
 }

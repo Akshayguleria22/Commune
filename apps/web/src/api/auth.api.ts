@@ -16,6 +16,9 @@ export const authApi = {
   login: (data: LoginPayload) =>
     apiClient.post('/auth/login', data).then((r) => r.data.data ?? r.data),
 
+  guest: (guestId: string) =>
+    apiClient.post('/auth/guest', { guestId }).then((r) => r.data.data ?? r.data),
+
   register: (data: RegisterPayload) =>
     apiClient.post('/auth/register', data).then((r) => r.data.data ?? r.data),
 

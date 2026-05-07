@@ -17,6 +17,7 @@ import { MediaModule } from './modules/media/media.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { databaseConfig } from './config/database.config';
 import { appConfig } from './config/app.config';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -105,6 +106,9 @@ import { appConfig } from './config/app.config';
     NotificationModule,
     MediaModule,
     QueueModule,
+
+    // Health checks
+    HealthModule,
   ],
 })
 export class AppModule {}
