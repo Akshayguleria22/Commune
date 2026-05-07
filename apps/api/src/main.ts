@@ -26,15 +26,15 @@ async function bootstrap() {
     .split(',')
     .map((origin) => normalizeOrigin(origin))
     .filter(Boolean);
-  const corsOrigin =
-    allowedOrigins.length === 0
-      ? 'http://localhost:5173'
-      : allowedOrigins.length === 1
-        ? allowedOrigins[0]
-        : allowedOrigins;
+
+  const corsOrigins: (string | RegExp)[] = [
+    ...allowedOrigins,
+    /^https:\/\/commune-.*\.vercel\.app$/,
+    /^http:\/\/localhost:\d+$/,
+  ];
 
   app.enableCors({
-    origin: corsOrigin,
+    origin: corsOrigins,
     credentials: true,
   });
 
