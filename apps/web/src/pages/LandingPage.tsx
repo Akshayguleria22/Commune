@@ -501,17 +501,17 @@ const LandingPage: React.FC = () => {
           ) : (
             <>
               <Button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/dashboard")}
                 style={{ ...ghostBtn, height: 40, padding: "0 20px" }}
               >
-                Sign In
+                Enter as Guest
               </Button>
               <Button
                 type="primary"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/dashboard")}
                 style={{ ...primaryBtn, height: 40, padding: "0 24px" }}
               >
-                Get Started Free <ArrowRightOutlined />
+                Open Workspace <ArrowRightOutlined />
               </Button>
             </>
           )}
@@ -620,9 +620,7 @@ const LandingPage: React.FC = () => {
                 <Button
                   type="primary"
                   size="large"
-                  onClick={() =>
-                    navigate(isAuthenticated ? "/dashboard" : "/login")
-                  }
+                  onClick={() => navigate("/dashboard")}
                   style={{
                     ...primaryBtn,
                     height: 54,
@@ -1766,7 +1764,7 @@ const LandingPage: React.FC = () => {
                 type="primary"
                 size="large"
                 onClick={() =>
-                  navigate(isAuthenticated ? "/dashboard" : "/login")
+                    navigate("/dashboard")
                 }
                 style={{
                   ...primaryBtn,

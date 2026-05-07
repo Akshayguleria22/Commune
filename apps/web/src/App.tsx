@@ -11,7 +11,6 @@ import { getOrCreateGuestId } from './shared/utils/guest';
 
 // Lazy-loaded pages
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
-const LoginPage = React.lazy(() => import('./modules/auth/pages/LoginPage'));
 const OAuthCallbackPage = React.lazy(() => import('./modules/auth/pages/OAuthCallbackPage'));
 const DashboardPage = React.lazy(() => import('./modules/community/pages/DashboardPage'));
 const CommunitiesPage = React.lazy(() => import('./modules/community/pages/CommunitiesPage'));
@@ -107,7 +106,7 @@ const AppInner: React.FC = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<Navigate to="/dashboard" replace />} />
               <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
               {/* Protected routes */}

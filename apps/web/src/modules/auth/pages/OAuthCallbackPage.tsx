@@ -20,12 +20,12 @@ const OAuthCallbackPage: React.FC = () => {
         message.success(`Welcome, ${user.displayName || user.username}! 🎉`);
         navigate('/dashboard', { replace: true });
       } catch {
-        message.error('OAuth login failed. Please try again.');
-        navigate('/login', { replace: true });
+        message.error('OAuth login failed. Continuing as guest.');
+        navigate('/dashboard', { replace: true });
       }
     } else {
-      message.error('OAuth login failed. No credentials received.');
-      navigate('/login', { replace: true });
+      message.error('OAuth login failed. Continuing as guest.');
+      navigate('/dashboard', { replace: true });
     }
   }, [searchParams, setAuth, navigate]);
 
